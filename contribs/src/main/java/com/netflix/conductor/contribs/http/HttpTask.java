@@ -15,13 +15,21 @@
  */
 package com.netflix.conductor.contribs.http;
 
+import com.alibaba.nacos.api.exception.NacosException;
+import com.alibaba.nacos.api.naming.NamingFactory;
+import com.alibaba.nacos.api.naming.NamingService;
+import com.alibaba.nacos.api.naming.pojo.Instance;
+import com.alibaba.nacos.client.naming.net.NamingHttpClientManager;
+import com.alibaba.nacos.client.naming.utils.UtilAndComs;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.conductor.common.metadata.tasks.Task;
 import com.netflix.conductor.common.metadata.tasks.Task.Status;
 import com.netflix.conductor.common.run.Workflow;
+import com.netflix.conductor.contribs.nacos.BaseNacosNamingServiceProvider;
 import com.netflix.conductor.core.config.Configuration;
+import com.netflix.conductor.core.events.ScriptEvaluator;
 import com.netflix.conductor.core.execution.WorkflowExecutor;
 import com.netflix.conductor.core.execution.tasks.WorkflowSystemTask;
 import com.sun.jersey.api.client.Client;
@@ -31,6 +39,8 @@ import com.sun.jersey.api.client.WebResource.Builder;
 import com.sun.jersey.oauth.client.OAuthClientFilter;
 import com.sun.jersey.oauth.signature.OAuthParameters;
 import com.sun.jersey.oauth.signature.OAuthSecrets;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +80,20 @@ public class HttpTask extends WorkflowSystemTask {
 
 	private String requestParameter;
 
+
+	//nacos client
 	@Inject
+    private NamingService namingService = null;
+
+
+	public NamingService getNamingService() {
+		return namingService;
+	}
+
+	public void setNamingService(NamingService namingService) {
+		this.namingService = namingService;
+	}
+
 	public HttpTask(RestClientManager restClientManager,
 					Configuration config,
 					ObjectMapper objectMapper) {
@@ -118,12 +141,18 @@ public class HttpTask extends WorkflowSystemTask {
 			HttpResponse response = httpCall(input);
 			logger.debug("Response: {}, {}, task:{}", response.statusCode, response.body, task.getTaskId());
 			if(response.statusCode > 199 && response.statusCode < 300) {
-				if (isAsyncComplete(task)) {
-					task.setStatus(Status.IN_PROGRESS);
-				} else {
-					task.setStatus(Status.COMPLETED);
-				}
-			} else {
+			    boolean result = this.executeFailedExpression(workflow, task,input,response );
+			    if(!result) {
+                    if (isAsyncComplete(task)) {
+                        task.setStatus(Status.IN_PROGRESS);
+                    } else {
+                        task.setStatus(Status.COMPLETED);
+                    }
+                } else {
+                    task.setStatus(Status.FAILED);
+                    task.setReasonForIncompletion(String.format("script:%s is true",input.getFailedExpression()));
+                }
+            } else {
 				if(response.body != null) {
 					task.setReasonForIncompletion(response.body.toString());
 				} else {
@@ -166,8 +195,9 @@ public class HttpTask extends WorkflowSystemTask {
 			OAuthSecrets secrets = new OAuthSecrets().consumerSecret(input.oauthConsumerSecret);
 			client.addFilter(new OAuthClientFilter(client.getProviders(), params, secrets));
 		}
-
-		Builder builder = client.resource(input.uri).type(input.contentType);
+        String url = this.discoveryForUrl(input);
+        logger.debug("http task request url {}",url);
+		Builder builder = client.resource(url).type(input.contentType);
 
 		if(input.body != null) {
 			builder.entity(input.body);
@@ -204,6 +234,64 @@ public class HttpTask extends WorkflowSystemTask {
 			}
 		}
 	}
+    private String discoveryForUrl(Input input) {
+	    String url = input.getUri();
+        try {
+            if(input.getVipAddress()!=null && !input.getVipAddress().equals("")) {
+            	String vipAddress = input.getVipAddress();
+            	if(this.namingService == null)
+            	logger.info("naming service is null");
+                if(this.namingService == null) {
+                    url = vipAddress + input.getUri();
+                } else {
+					String serviceName = vipAddress;
+					String schema = UtilAndComs.HTTP;
+					if (vipAddress.startsWith(UtilAndComs.HTTPS) || vipAddress.startsWith(UtilAndComs.HTTP)) {
+						serviceName = StringUtils.substringAfter(vipAddress,"//");
+						if(vipAddress.startsWith(UtilAndComs.HTTPS)) schema = UtilAndComs.HTTPS;
+					}
+                    Instance instance = namingService.selectOneHealthyInstance(serviceName);
+					logger.info("instance's ip is {},port is {}",instance.getIp(),instance.getPort());
+					url = schema + instance.getIp() + UtilAndComs.SERVER_ADDR_IP_SPLITER + instance.getPort() + input.getUri();
+                }
+            }
+        } catch (NacosException e) {
+            logger.error("get healthy instance failed",e);
+        }
+        return url;
+    }
+
+    private boolean executeFailedExpression(Workflow workflow, Task task, Input input,HttpResponse response) throws Exception {
+        String scriptExpression;
+
+        try {
+            scriptExpression = input.getFailedExpression();
+            boolean result = false;
+            if (StringUtils.isNotBlank(scriptExpression)) {
+                String scriptExpressionBuilder = "function scriptFun(){" +
+                        scriptExpression +
+                        "} scriptFun();";
+
+                logger.debug("scriptExpressionBuilder: {}, task: {}" , scriptExpressionBuilder,task.getTaskId());
+                Object returnValue = ScriptEvaluator.eval(scriptExpressionBuilder, response);
+
+                if(returnValue instanceof Boolean) {
+                    result = BooleanUtils.toBoolean((Boolean) returnValue);
+                }
+                if(returnValue instanceof Integer) {
+                    result = BooleanUtils.toBoolean((Integer) returnValue);
+                }
+                if(returnValue instanceof String) {
+                    result = BooleanUtils.toBoolean((String) returnValue);
+                }
+                return result;
+            }
+            return result;
+        } catch (Exception e) {
+            logger.error("Failed to execute failed expression Task: {} in workflow: {}", task.getTaskId(), workflow.getWorkflowId(), e);
+            throw new Exception(String.format("script:%s, error message:",input.getFailedExpression(),e.getMessage()));
+        }
+    }
 
 	private Object extractBody(ClientResponse cr) {
 
@@ -297,6 +385,8 @@ public class HttpTask extends WorkflowSystemTask {
 		private  Integer connectionTimeOut;
 
 		private Integer  readTimeOut;
+
+		private String failedExpression;
 
 
 
@@ -459,5 +549,14 @@ public class HttpTask extends WorkflowSystemTask {
 			this.readTimeOut = readTimeOut;
 		}
 
+        public String getFailedExpression() {
+            return failedExpression;
+        }
+
+        public void setFailedExpression(String failedExpression) {
+            this.failedExpression = failedExpression;
+        }
+
 	}
+
 }

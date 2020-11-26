@@ -19,6 +19,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.alibaba.nacos.api.exception.NacosException;
+import com.alibaba.nacos.api.naming.NamingFactory;
+import com.alibaba.nacos.api.naming.NamingService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +32,10 @@ import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
 import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
 import com.netflix.conductor.common.run.Workflow;
 import com.netflix.conductor.common.utils.JsonMapperProvider;
+import com.netflix.conductor.contribs.NacosModule;
 import com.netflix.conductor.contribs.http.HttpTask.Input;
+import com.netflix.conductor.contribs.nacos.BaseNacosNamingServiceProvider;
+import com.netflix.conductor.contribs.nacos.NacosNamingServiceProvider;
 import com.netflix.conductor.core.config.Configuration;
 import com.netflix.conductor.core.execution.DeciderService;
 import com.netflix.conductor.core.execution.ParametersUtils;
@@ -84,6 +90,8 @@ public class TestHttpTask {
 
     private static Server server;
 
+    private static NamingService naming;
+
     private static ObjectMapper objectMapper = new JsonMapperProvider().get();
 
     @BeforeClass
@@ -98,6 +106,12 @@ public class TestHttpTask {
         ServletContextHandler servletContextHandler = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
         servletContextHandler.setHandler(new EchoHandler());
         server.start();
+        try {
+            naming = NamingFactory.createNamingService("http://localhost:8848");
+            naming.registerInstance("http-test", "localhost", 7009, "TEST1");
+        } catch (NacosException e) {
+            e.printStackTrace();
+        }
     }
 
     @AfterClass
@@ -109,15 +123,23 @@ public class TestHttpTask {
                 e.printStackTrace();
             }
         }
+        try {
+            naming.deregisterInstance("http-test","localhost",7009,"TEST1");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Before
     public void setup() {
+
         workflowExecutor = mock(WorkflowExecutor.class);
         config = mock(Configuration.class);
-        RestClientManager rcm = new RestClientManager(Mockito.mock(Configuration.class));
+        Mockito.when(config.getProperty(BaseNacosNamingServiceProvider.NACOS_SERVER_URL_PROPERTY_NAME,"")).thenReturn("http://localhost:8848");
+        RestClientManager rcm = new RestClientManager(config);
         when(config.getServerId()).thenReturn("test_server_id");
         httpTask = new HttpTask(rcm, config, objectMapper);
+
     }
 
     @Test
@@ -221,8 +243,10 @@ public class TestHttpTask {
 
         Task task = new Task();
         Input input = new Input();
-        input.setUri("http://localhost:7009/text");
+        input.setUri("/text");
         input.setMethod("GET");
+        input.setVipAddress("http-test");
+        input.setFailedExpression("if($.body == '" + TEXT_RESPONSE + "1') return true");
         task.getInputData().put(HttpTask.REQUEST_PARAMETER_NAME, input);
 
         httpTask.start(workflow, task, workflowExecutor);

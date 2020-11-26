@@ -39,6 +39,7 @@ public class RestClientManager {
 	private final int defaultReadTimeout;
 	private final int defaultConnectTimeout;
 
+
 	public RestClientManager(Configuration config) {
 		this.threadLocalClient = ThreadLocal.withInitial(Client::create);
 		this.defaultReadTimeout =config.getIntProperty(HTTP_TASK_READ_TIMEOUT, DEFAULT_READ_TIMEOUT);
@@ -51,4 +52,5 @@ public class RestClientManager {
 		client.setConnectTimeout(defaultConnectTimeout);
 		return client;
 	}
+
 }
