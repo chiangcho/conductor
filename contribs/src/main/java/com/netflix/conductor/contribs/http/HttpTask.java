@@ -16,10 +16,8 @@
 package com.netflix.conductor.contribs.http;
 
 import com.alibaba.nacos.api.exception.NacosException;
-import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
-import com.alibaba.nacos.client.naming.net.NamingHttpClientManager;
 import com.alibaba.nacos.client.naming.utils.UtilAndComs;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,7 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.conductor.common.metadata.tasks.Task;
 import com.netflix.conductor.common.metadata.tasks.Task.Status;
 import com.netflix.conductor.common.run.Workflow;
-import com.netflix.conductor.contribs.nacos.BaseNacosNamingServiceProvider;
 import com.netflix.conductor.core.config.Configuration;
 import com.netflix.conductor.core.events.ScriptEvaluator;
 import com.netflix.conductor.core.execution.WorkflowExecutor;
@@ -196,7 +193,7 @@ public class HttpTask extends WorkflowSystemTask {
 			client.addFilter(new OAuthClientFilter(client.getProviders(), params, secrets));
 		}
         String url = this.discoveryForUrl(input);
-        logger.debug("http task request url {}",url);
+        logger.info("http task request url {}",url);
 		Builder builder = client.resource(url).type(input.contentType);
 
 		if(input.body != null) {
@@ -272,7 +269,7 @@ public class HttpTask extends WorkflowSystemTask {
                         scriptExpression +
                         "} scriptFun();";
 
-                logger.debug("scriptExpressionBuilder: {}, task: {}" , scriptExpressionBuilder,task.getTaskId());
+                logger.info("scriptExpressionBuilder: {}, task: {}" , scriptExpressionBuilder,task.getTaskId());
                 Object returnValue = ScriptEvaluator.eval(scriptExpressionBuilder, response);
 
                 if(returnValue instanceof Boolean) {
