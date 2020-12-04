@@ -6,6 +6,8 @@ dependencies {
 	compile 'com.amazonaws:aws-java-sdk-sqs:latest.release'
 	compile "com.google.inject:guice:${revGuice}"
 
+	compile "redis.clients:jedis:${revJedis}"
+
 	compile "net.thisptr:jackson-jq:${revJq}"
 
 	compile "com.sun.jersey.contribs.jersey-oauth:oauth-client:${revOauthClient}"

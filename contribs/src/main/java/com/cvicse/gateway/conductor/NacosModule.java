@@ -1,8 +1,8 @@
-package com.netflix.conductor.contribs;
+package com.cvicse.gateway.conductor;
 
 import com.alibaba.nacos.api.naming.NamingService;
 import com.google.inject.AbstractModule;
-import com.netflix.conductor.contribs.nacos.BaseNacosNamingServiceProvider;
+import com.cvicse.gateway.conductor.nacos.BaseNacosNamingServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
