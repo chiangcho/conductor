@@ -30,7 +30,7 @@ dependencies {
     testCompile project(':conductor-server')
     testCompile project(':conductor-grpc-client')
     testCompile project(':conductor-grpc-server')
-    testCompile "org.elasticsearch:elasticsearch:${revElasticSearch5}"
+    testCompile "org.elasticsearch:elasticsearch:${revElasticSearch6}"
     testCompile "org.eclipse.jetty:jetty-server:${revJetteyServer}"
     testCompile "org.eclipse.jetty:jetty-servlet:${revJettyServlet}"
     testCompile "org.rarefiedredis.redis:redis-java:${revRarefiedRedis}"
@@ -44,10 +44,10 @@ dependencies {
     testCompile "org.spockframework:spock-core:${revSpock}"
     testCompile "org.spockframework:spock-guice:${revSpock}"
     testCompile 'com.netflix.governator:governator-test-spock:latest.release'
-    testCompile "org.elasticsearch:elasticsearch:${revElasticSearch5}"
-    testCompile "org.elasticsearch.client:transport:${revElasticSearch5}"
-    testCompile "org.elasticsearch.client:elasticsearch-rest-client:${revElasticSearch5}"
-    testCompile "org.elasticsearch.client:elasticsearch-rest-high-level-client:${revElasticSearch5}"
+    testCompile "org.elasticsearch:elasticsearch:${revElasticSearch6}"
+    testCompile "org.elasticsearch.client:transport:${revElasticSearch6}"
+    testCompile "org.elasticsearch.client:elasticsearch-rest-client:${revElasticSearch6}"
+    testCompile "org.elasticsearch.client:elasticsearch-rest-high-level-client:${revElasticSearch6}"
 }
 
 dockerCompose{
