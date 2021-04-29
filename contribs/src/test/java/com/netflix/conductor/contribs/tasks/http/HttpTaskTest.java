@@ -135,7 +135,7 @@ public class HttpTaskTest {
     public void setup() {
         workflowExecutor = mock(WorkflowExecutor.class);
         DefaultRestTemplateProvider defaultRestTemplateProvider =
-            new DefaultRestTemplateProvider(Duration.ofMillis(150), Duration.ofMillis(100));
+            new DefaultRestTemplateProvider(Duration.ofMillis(150), Duration.ofMillis(100), null);
         httpTask = new HttpTask(defaultRestTemplateProvider, objectMapper);
     }
 
@@ -241,6 +241,7 @@ public class HttpTaskTest {
         Input input = new Input();
         input.setUri("http://" + mockServer.getHost() + ":" + mockServer.getServerPort() + "/text");
         input.setMethod("GET");
+        input.setFailedExpression("if($.body == '" + TEXT_RESPONSE + "1') return true");
         task.getInputData().put(HttpTask.REQUEST_PARAMETER_NAME, input);
 
         httpTask.start(workflow, task, workflowExecutor);

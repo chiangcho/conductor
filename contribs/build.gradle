@@ -27,7 +27,7 @@ dependencies {
     implementation "com.netflix.spectator:spectator-reg-micrometer:${revSpectator}"
 	implementation "io.prometheus:simpleclient:${revPrometheus}"
 	implementation "io.micrometer:micrometer-registry-prometheus:${revMicrometer}"
-
+    implementation "redis.clients:jedis:${revJedis}"
     testImplementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation "org.testcontainers:mockserver:${revTestContainer}"
     testImplementation "org.mock-server:mockserver-client-java:${revMockServerClient}"

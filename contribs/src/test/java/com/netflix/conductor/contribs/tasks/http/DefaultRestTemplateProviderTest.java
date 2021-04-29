@@ -25,7 +25,7 @@ public class DefaultRestTemplateProviderTest {
     @Test
     public void differentObjectsForDifferentThreads() throws InterruptedException {
         DefaultRestTemplateProvider defaultRestTemplateProvider =
-            new DefaultRestTemplateProvider(Duration.ofMillis(150), Duration.ofMillis(100));
+            new DefaultRestTemplateProvider(Duration.ofMillis(150), Duration.ofMillis(100),null);
         final RestTemplate restTemplate = defaultRestTemplateProvider.getRestTemplate(new HttpTask.Input());
         final StringBuilder result = new StringBuilder();
         Thread t1 = new Thread(() -> {
@@ -42,7 +42,7 @@ public class DefaultRestTemplateProviderTest {
     @Test
     public void sameObjectForSameThread() {
         DefaultRestTemplateProvider defaultRestTemplateProvider =
-            new DefaultRestTemplateProvider(Duration.ofMillis(150), Duration.ofMillis(100));
+            new DefaultRestTemplateProvider(Duration.ofMillis(150), Duration.ofMillis(100),null);
         RestTemplate client1 = defaultRestTemplateProvider.getRestTemplate(new HttpTask.Input());
         RestTemplate client2 = defaultRestTemplateProvider.getRestTemplate(new HttpTask.Input());
         assertSame(client1, client2);

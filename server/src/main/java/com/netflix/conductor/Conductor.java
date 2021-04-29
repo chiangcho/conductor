@@ -16,13 +16,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.util.Properties;
 
 @SpringBootApplication
+@EnableDiscoveryClient
 public class Conductor {
 
     private static final Logger log = LoggerFactory.getLogger(Conductor.class);
@@ -33,6 +38,11 @@ public class Conductor {
         SpringApplication.run(Conductor.class, args);
     }
 
+    @Bean
+    @LoadBalanced
+    RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
     /**
      * Reads properties from the location specified in <code>CONDUCTOR_CONFIG_FILE</code>
      * and sets them as system properties so they override the default properties.
