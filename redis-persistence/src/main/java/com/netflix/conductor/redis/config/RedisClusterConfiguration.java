@@ -34,7 +34,7 @@ public class RedisClusterConfiguration extends JedisCommandsConfigurer {
         genericObjectPoolConfig.setMaxTotal(properties.getMaxConnectionsPerHost());
         Host host = hostSupplier.getHosts().get(0);
         return new JedisCluster(
-            new redis.clients.jedis.JedisCluster(new HostAndPort(host.getHostName(), host.getPort()),
+            new redis.clients.jedis.JedisCluster(new HostAndPort(host.getHostName(), host.getPort()),2000,2000,5,host.getPassword(),
                 genericObjectPoolConfig));
     }
 }

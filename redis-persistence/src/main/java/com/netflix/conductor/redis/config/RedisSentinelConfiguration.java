@@ -19,6 +19,8 @@ import com.netflix.dyno.connectionpool.HostSupplier;
 import com.netflix.dyno.connectionpool.TokenMapSupplier;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,10 +43,14 @@ public class RedisSentinelConfiguration extends JedisCommandsConfigurer {
         genericObjectPoolConfig.setMaxTotal(properties.getMaxConnectionsPerHost());
         log.info("Starting conductor server using redis_sentinel and cluster " + properties.getClusterName());
         Set<String> sentinels = new HashSet<>();
+        String password = null;
         for (Host host : hostSupplier.getHosts()) {
             sentinels.add(host.getHostName() + ":" + host.getPort());
+            if(StringUtils.isNotBlank(host.getPassword())) {
+                password = host.getPassword();
+            }
         }
         return new JedisSentinel(
-            new JedisSentinelPool(properties.getClusterName(), sentinels, genericObjectPoolConfig));
+            new JedisSentinelPool(properties.getClusterName(), sentinels, genericObjectPoolConfig, password));
     }
 }
