@@ -120,7 +120,11 @@ public class HttpTask extends WorkflowSystemTask {
                     }
                 } else {
                     task.setStatus(Status.FAILED);
-                    task.setReasonForIncompletion(String.format("script:%s is true",input.getFailedExpression()));
+                    if(StringUtils.isNotBlank(input.getFailedMessage())) {
+                        task.setReasonForIncompletion(input.getFailedMessage());
+                    } else {
+                        task.setReasonForIncompletion(String.format("script:%s is true",input.getFailedExpression()));
+                    }
                 }
             } else {
                 if (response.body != null) {
@@ -163,7 +167,11 @@ public class HttpTask extends WorkflowSystemTask {
 
         HttpResponse response = new HttpResponse();
         try {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(input.getUri(), input.getMethod(), request,
+            String url = input.getUri();
+            if(StringUtils.isNotBlank(input.getVipAddress())) {
+                url = input.getVipAddress() + url;
+            }
+            ResponseEntity<String> responseEntity = restTemplate.exchange(url, input.getMethod(), request,
                 String.class);
             if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.hasBody()) {
                 response.body = extractBody(responseEntity.getBody());
@@ -283,6 +291,7 @@ public class HttpTask extends WorkflowSystemTask {
         private Integer connectionTimeOut;
         private Integer readTimeOut;
         private String failedExpression;
+        private String failedMessage;
         /**
          * @return the method
          */
@@ -418,5 +427,13 @@ public class HttpTask extends WorkflowSystemTask {
         public void setFailedExpression(String failedExpression) {
             this.failedExpression = failedExpression;
         }
+
+        public String getFailedMessage() {
+            return failedMessage;
+        }
+
+        public void setFailedMessage(String failedMessage) {
+            this.failedMessage = failedMessage;
+        }        
     }
 }
