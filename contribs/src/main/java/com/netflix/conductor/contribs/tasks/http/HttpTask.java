@@ -121,7 +121,8 @@ public class HttpTask extends WorkflowSystemTask {
                 } else {
                     task.setStatus(Status.FAILED);
                     if(StringUtils.isNotBlank(input.getFailedMessage())) {
-                        task.setReasonForIncompletion(input.getFailedMessage());
+                        String reason = this.executeFailedMessage(workflow, task, input, response);
+                        task.setReasonForIncompletion(reason);
                     } else {
                         task.setReasonForIncompletion(String.format("script:%s is true",input.getFailedExpression()));
                     }
@@ -236,7 +237,28 @@ public class HttpTask extends WorkflowSystemTask {
             return result;
         } catch (Exception e) {
             LOGGER.error("Failed to execute failed expression Task: {} in workflow: {}", task.getTaskId(), workflow.getWorkflowId(), e);
-            throw new Exception(String.format("script:%s, error message:",input.getFailedExpression(),e.getMessage()));
+            throw new Exception(String.format("script:%s, error message:",input.getFailedExpression(),e.getMessage()),e);
+        }
+    }
+
+    private String executeFailedMessage(Workflow workflow, Task task, Input input,HttpResponse response) throws Exception {
+        String messageScript;
+
+        try {
+            messageScript = input.getFailedMessage();
+            if (StringUtils.isNotBlank(messageScript)) {
+                String messageScriptBuilder = "function scriptFun(){" +
+                            messageScript +
+                        "} scriptFun();";
+
+                LOGGER.debug("failedMessageBuilder: {}, task: {}" , messageScriptBuilder,task.getTaskId());
+                Object returnValue = ScriptEvaluator.eval(messageScriptBuilder, response);
+                return returnValue.toString();
+            }
+            return "";
+        } catch (Exception e) {
+            LOGGER.error("Failed to execute failed message Task: {} in workflow: {}", task.getTaskId(), workflow.getWorkflowId(), e);
+            throw new Exception(String.format("script:%s, error message:",input.getFailedMessage(),e.getMessage()),e);
         }
     }
 
