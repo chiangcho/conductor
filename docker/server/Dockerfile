@@ -3,7 +3,7 @@
 #
 
 # 1. Bin stage
-FROM openjdk:17-jdk-alpine3.13
+FROM openjdk:8u292-jdk-slim
 
 MAINTAINER Netflix OSS <conductor@netflix.com>
 
