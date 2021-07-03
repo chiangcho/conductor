@@ -13,41 +13,42 @@
 package com.netflix.conductor.mysql.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.netflix.conductor.dao.ExecutionDAO;
-import com.netflix.conductor.dao.MetadataDAO;
-import com.netflix.conductor.dao.QueueDAO;
 import com.netflix.conductor.mysql.dao.MySQLExecutionDAO;
 import com.netflix.conductor.mysql.dao.MySQLMetadataDAO;
 import com.netflix.conductor.mysql.dao.MySQLQueueDAO;
 import javax.sql.DataSource;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Import;
 
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(MySQLProperties.class)
 @ConditionalOnProperty(name = "conductor.db.type", havingValue = "mysql")
+// Import the DataSourceAutoConfiguration when mysql database is selected.
+// By default the datasource configuration is excluded in the main module.
+@Import(DataSourceAutoConfiguration.class)
 public class MySQLConfiguration {
 
     @Bean
-    public DataSource dataSource(MySQLProperties properties) {
-        return new MySQLDataSourceProvider(properties).getDataSource();
-    }
-
-    @Bean
-    public MetadataDAO mySqlMetadataDAO(ObjectMapper objectMapper, DataSource dataSource, MySQLProperties properties) {
+    @DependsOn({"flyway", "flywayInitializer"})
+    public MySQLMetadataDAO mySqlMetadataDAO(ObjectMapper objectMapper, DataSource dataSource, MySQLProperties properties) {
         return new MySQLMetadataDAO(objectMapper, dataSource, properties);
     }
 
     @Bean
-    public ExecutionDAO mySqlExecutionDAO(ObjectMapper objectMapper, DataSource dataSource) {
+    @DependsOn({"flyway", "flywayInitializer"})
+    public MySQLExecutionDAO mySqlExecutionDAO(ObjectMapper objectMapper, DataSource dataSource) {
         return new MySQLExecutionDAO(objectMapper, dataSource);
     }
 
     @Bean
-    public QueueDAO mySqlQueueDAO(ObjectMapper objectMapper, DataSource dataSource) {
+    @DependsOn({"flyway", "flywayInitializer"})
+    public MySQLQueueDAO mySqlQueueDAO(ObjectMapper objectMapper, DataSource dataSource) {
         return new MySQLQueueDAO(objectMapper, dataSource);
     }
 }

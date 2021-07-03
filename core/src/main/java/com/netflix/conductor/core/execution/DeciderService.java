@@ -12,13 +12,6 @@
  */
 package com.netflix.conductor.core.execution;
 
-import static com.netflix.conductor.common.metadata.tasks.Task.Status.COMPLETED_WITH_ERRORS;
-import static com.netflix.conductor.common.metadata.tasks.Task.Status.IN_PROGRESS;
-import static com.netflix.conductor.common.metadata.tasks.Task.Status.SCHEDULED;
-import static com.netflix.conductor.common.metadata.tasks.Task.Status.SKIPPED;
-import static com.netflix.conductor.common.metadata.tasks.Task.Status.TIMED_OUT;
-import static com.netflix.conductor.common.metadata.tasks.TaskType.TERMINATE;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.netflix.conductor.common.metadata.tasks.Task;
 import com.netflix.conductor.common.metadata.tasks.Task.Status;
@@ -40,6 +33,13 @@ import com.netflix.conductor.core.utils.IDGenerator;
 import com.netflix.conductor.core.utils.ParametersUtils;
 import com.netflix.conductor.dao.MetadataDAO;
 import com.netflix.conductor.metrics.Monitors;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,12 +51,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+
+import static com.netflix.conductor.common.metadata.tasks.Task.Status.COMPLETED_WITH_ERRORS;
+import static com.netflix.conductor.common.metadata.tasks.Task.Status.IN_PROGRESS;
+import static com.netflix.conductor.common.metadata.tasks.Task.Status.SCHEDULED;
+import static com.netflix.conductor.common.metadata.tasks.Task.Status.SKIPPED;
+import static com.netflix.conductor.common.metadata.tasks.Task.Status.TIMED_OUT;
+import static com.netflix.conductor.common.metadata.tasks.TaskType.TERMINATE;
 
 /**
  * Decider evaluates the state of the workflow by inspecting the current state along with the blueprint. The result of
@@ -67,6 +68,9 @@ import org.springframework.stereotype.Service;
 public class DeciderService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeciderService.class);
+
+    @VisibleForTesting
+    static final String MAX_TASK_LIMIT = "conductor.app.max-task-limit";
 
     private final ParametersUtils parametersUtils;
     private final ExternalPayloadStorageUtils externalPayloadStorageUtils;
@@ -167,7 +171,7 @@ public class DeciderService {
             }
 
             Optional<TaskDef> taskDefinition = pendingTask.getTaskDefinition();
-            if (!taskDefinition.isPresent()) {
+            if (taskDefinition.isEmpty()) {
                 taskDefinition = Optional
                     .ofNullable(workflow.getWorkflowDefinition().getTaskByRefName(pendingTask.getReferenceTaskName()))
                     .map(WorkflowTask::getTaskDefinition);
@@ -583,8 +587,8 @@ public class DeciderService {
             return;
         }
 
-        String reason = String.format("Workflow '%s' timed out after %d seconds. Timeout configured as %d. " +
-                "Timeout policy configured to %s", workflow.getWorkflowId(), elapsedTime / 1000L, timeout,
+        String reason = String.format("Workflow timed out after %d seconds. Timeout configured as %d seconds. " +
+                "Timeout policy configured to %s", elapsedTime / 1000L, workflowDef.getTimeoutSeconds(),
             workflowDef.getTimeoutPolicy().name());
 
         switch (workflowDef.getTimeoutPolicy()) {
@@ -619,7 +623,7 @@ public class DeciderService {
         }
 
         String reason = String.format("Task timed out after %d seconds. Timeout configured as %d seconds. "
-                + "Timeout policy configured to %s", elapsedTime / 1000L, timeout / 1000L,
+                + "Timeout policy configured to %s", elapsedTime / 1000L, taskDef.getTimeoutSeconds(),
             taskDef.getTimeoutPolicy().name());
         timeoutTaskWithTimeoutPolicy(reason, taskDef, task);
     }
@@ -734,11 +738,8 @@ public class DeciderService {
         Map<String, Object> input = parametersUtils.getTaskInput(taskToSchedule.getInputParameters(),
             workflow, null, null);
 
-        TaskType taskType = TaskType.USER_DEFINED;
         String type = taskToSchedule.getType();
-        if (TaskType.isSystemTask(type)) {
-            taskType = TaskType.valueOf(type);
-        }
+        TaskType taskType = TaskType.of(type);
 
         // get tasks already scheduled (in progress/terminal) for  this workflow instance
         List<String> tasksInWorkflow = workflow.getTasks().stream()

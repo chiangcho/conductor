@@ -1,16 +1,43 @@
 /*
- * Copyright 2020 Netflix, Inc.
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
+ *  Copyright 2021 Netflix, Inc.
+ *  <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ *  the License. You may obtain a copy of the License at
+ *  <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *  <p>
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations under the License.
  */
 package com.netflix.conductor.mysql.dao;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
+import com.netflix.conductor.common.config.TestObjectMapperConfiguration;
+import com.netflix.conductor.core.events.queue.Message;
+import com.netflix.conductor.mysql.config.MySQLConfiguration;
+import com.netflix.conductor.mysql.util.Query;
+import org.flywaydb.core.Flyway;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -18,67 +45,31 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
-import com.netflix.conductor.common.config.ObjectMapperConfiguration;
-import com.netflix.conductor.core.events.queue.Message;
-import com.netflix.conductor.mysql.util.MySQLDAOTestUtil;
-import com.netflix.conductor.mysql.util.Query;
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.utility.DockerImageName;
-
-@ContextConfiguration(classes = {ObjectMapperConfiguration.class})
+@ContextConfiguration(classes = {TestObjectMapperConfiguration.class, MySQLConfiguration.class, FlywayAutoConfiguration.class})
 @RunWith(SpringRunner.class)
+@SpringBootTest
 public class MySQLQueueDAOTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MySQLQueueDAOTest.class);
 
-    private MySQLDAOTestUtil testUtil;
+    @Autowired
     private MySQLQueueDAO queueDAO;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Rule
-    public TestName name = new TestName();
+    @Qualifier("dataSource")
+    @Autowired
+    private DataSource dataSource;
 
-    @Rule
-    public ExpectedException expected = ExpectedException.none();
+    @Autowired
+    Flyway flyway;
 
-    public MySQLContainer<?> mySQLContainer;
-
+    // clean the database between tests.
     @Before
-    public void setup() {
-        mySQLContainer = new MySQLContainer<>(DockerImageName.parse("mysql")).withDatabaseName(name.getMethodName());
-        mySQLContainer.start();
-        testUtil = new MySQLDAOTestUtil(mySQLContainer, objectMapper, name.getMethodName());
-        queueDAO = new MySQLQueueDAO(testUtil.getObjectMapper(), testUtil.getDataSource());
-    }
-
-    @After
-    public void teardown() {
-        testUtil.resetAllData();
-        testUtil.getDataSource().close();
+    public void before() {
+        flyway.clean();
+        flyway.migrate();
     }
 
     @Test
@@ -220,9 +211,9 @@ public class MySQLQueueDAOTest {
 
         // Assert that our un-popped messages match our expected size
         final long expectedSize = totalSize - firstPollSize - secondPollSize;
-        try (Connection c = testUtil.getDataSource().getConnection()) {
+        try (Connection c = dataSource.getConnection()) {
             String UNPOPPED = "SELECT COUNT(*) FROM queue_message WHERE queue_name = ? AND popped = false";
-            try (Query q = new Query(testUtil.getObjectMapper(), c, UNPOPPED)) {
+            try (Query q = new Query(objectMapper, c, UNPOPPED)) {
                 long count = q.addParameter(queueName).executeCount();
                 assertEquals("Remaining queue size mismatch", expectedSize, count);
             }
@@ -302,9 +293,9 @@ public class MySQLQueueDAOTest {
 
         // Assert that our un-popped messages match our expected size
         final long expectedSize = totalSize - firstPollSize - secondPollSize;
-        try (Connection c = testUtil.getDataSource().getConnection()) {
+        try (Connection c = dataSource.getConnection()) {
             String UNPOPPED = "SELECT COUNT(*) FROM queue_message WHERE queue_name = ? AND popped = false";
-            try (Query q = new Query(testUtil.getObjectMapper(), c, UNPOPPED)) {
+            try (Query q = new Query(objectMapper, c, UNPOPPED)) {
                 long count = q.addParameter(queueName).executeCount();
                 assertEquals("Remaining queue size mismatch", expectedSize, count);
             }

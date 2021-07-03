@@ -1,16 +1,45 @@
 /*
- * Copyright 2020 Netflix, Inc.
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
+ *  Copyright 2021 Netflix, Inc.
+ *  <p>
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ *  the License. You may obtain a copy of the License at
+ *  <p>
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *  <p>
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations under the License.
  */
 package com.netflix.conductor.postgres.dao;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
+import com.netflix.conductor.common.config.TestObjectMapperConfiguration;
+import com.netflix.conductor.core.events.queue.Message;
+import com.netflix.conductor.postgres.config.PostgresConfiguration;
+import com.netflix.conductor.postgres.util.Query;
+import org.flywaydb.core.Flyway;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -18,41 +47,20 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
-import com.netflix.conductor.common.config.ObjectMapperConfiguration;
-import com.netflix.conductor.core.events.queue.Message;
-import com.netflix.conductor.postgres.util.PostgresDAOTestUtil;
-import com.netflix.conductor.postgres.util.Query;
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
-
-@ContextConfiguration(classes = {ObjectMapperConfiguration.class})
+@ContextConfiguration(
+        classes = {TestObjectMapperConfiguration.class, PostgresConfiguration.class, FlywayAutoConfiguration.class})
 @RunWith(SpringRunner.class)
+@SpringBootTest
 public class PostgresQueueDAOTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PostgresQueueDAOTest.class);
 
-    private PostgresDAOTestUtil testUtil;
+    @Autowired
     private PostgresQueueDAO queueDAO;
+
+    @Qualifier("dataSource")
+    @Autowired
+    private DataSource dataSource;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -60,24 +68,15 @@ public class PostgresQueueDAOTest {
     @Rule
     public TestName name = new TestName();
 
-    @Rule
-    public ExpectedException expected = ExpectedException.none();
 
-    public PostgreSQLContainer<?> postgreSQLContainer;
+    @Autowired
+    Flyway flyway;
 
+    // clean the database between tests.
     @Before
-    public void setup() {
-        postgreSQLContainer =
-            new PostgreSQLContainer<>(DockerImageName.parse("postgres")).withDatabaseName(name.getMethodName().toLowerCase());
-        postgreSQLContainer.start();
-        testUtil = new PostgresDAOTestUtil(postgreSQLContainer, objectMapper, name.getMethodName().toLowerCase());
-        queueDAO = new PostgresQueueDAO(testUtil.getObjectMapper(), testUtil.getDataSource());
-    }
-
-    @After
-    public void teardown() {
-        testUtil.resetAllData();
-        testUtil.getDataSource().close();
+    public void before() {
+        flyway.clean();
+        flyway.migrate();
     }
 
     @Test
@@ -196,9 +195,9 @@ public class PostgresQueueDAOTest {
 
         // Assert that our un-popped messages match our expected size
         final long expectedSize = totalSize - firstPollSize - secondPollSize;
-        try (Connection c = testUtil.getDataSource().getConnection()) {
+        try (Connection c = dataSource.getConnection()) {
             String UNPOPPED = "SELECT COUNT(*) FROM queue_message WHERE queue_name = ? AND popped = false";
-            try (Query q = new Query(testUtil.getObjectMapper(), c, UNPOPPED)) {
+            try (Query q = new Query(objectMapper, c, UNPOPPED)) {
                 long count = q.addParameter(queueName).executeCount();
                 assertEquals("Remaining queue size mismatch", expectedSize, count);
             }
@@ -305,9 +304,9 @@ public class PostgresQueueDAOTest {
 
         // Assert that our un-popped messages match our expected size
         final long expectedSize = totalSize - firstPollSize - secondPollSize;
-        try (Connection c = testUtil.getDataSource().getConnection()) {
+        try (Connection c = dataSource.getConnection()) {
             String UNPOPPED = "SELECT COUNT(*) FROM queue_message WHERE queue_name = ? AND popped = false";
-            try (Query q = new Query(testUtil.getObjectMapper(), c, UNPOPPED)) {
+            try (Query q = new Query(objectMapper, c, UNPOPPED)) {
                 long count = q.addParameter(queueName).executeCount();
                 assertEquals("Remaining queue size mismatch", expectedSize, count);
             }
