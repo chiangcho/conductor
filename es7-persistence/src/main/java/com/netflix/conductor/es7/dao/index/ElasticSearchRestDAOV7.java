@@ -55,6 +55,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -215,6 +216,7 @@ public class ElasticSearchRestDAOV7 extends ElasticSearchBaseDAO implements Inde
     }
 
     @Override
+    @PostConstruct
     public void setup() throws Exception {
         waitForHealthyCluster();
 
@@ -247,7 +249,9 @@ public class ElasticSearchRestDAOV7 extends ElasticSearchBaseDAO implements Inde
     private void initIndexTemplate(String type) {
         String template = "template_" + type;
         try {
-            if (doesResourceNotExist("/_index_template/" + template)) {
+            //由于可能没有head，/_index_template/template1的权限，因此改为workflow索引代替
+            String resourcePath = "/" + getIndexName(WORKFLOW_DOC_TYPE);
+            if (doesResourceNotExist(resourcePath)) {
                 logger.info("Creating the index template '" + template + "'");
                 InputStream stream = ElasticSearchRestDAOV7.class.getResourceAsStream("/" + template + ".json");
                 byte[] templateSource = IOUtils.toByteArray(stream);
@@ -305,11 +309,12 @@ public class ElasticSearchRestDAOV7 extends ElasticSearchBaseDAO implements Inde
      * @throws Exception If there is an issue connecting with the ES cluster.
      */
     private void waitForHealthyCluster() throws Exception {
-        Map<String, String> params = new HashMap<>();
-        params.put("wait_for_status", this.clusterHealthColor);
-        params.put("timeout", "30s");
+        // Map<String, String> params = new HashMap<>();
+        // params.put("wait_for_status", this.clusterHealthColor);
+        // params.put("timeout", "30s");
         Request request = new Request("GET", "/_cluster/health");
-        request.addParameters(params);
+        request.addParameter("wait_for_status", this.clusterHealthColor);
+        request.addParameter("timeout", "30s");
         elasticSearchAdminClient.performRequest(request);
     }
 
