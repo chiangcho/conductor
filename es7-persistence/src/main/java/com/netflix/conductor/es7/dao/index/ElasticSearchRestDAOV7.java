@@ -249,9 +249,7 @@ public class ElasticSearchRestDAOV7 extends ElasticSearchBaseDAO implements Inde
     private void initIndexTemplate(String type) {
         String template = "template_" + type;
         try {
-            //由于可能没有head，/_index_template/template1的权限，因此改为workflow索引代替
-            String resourcePath = "/" + getIndexName(WORKFLOW_DOC_TYPE);
-            if (doesResourceNotExist(resourcePath)) {
+            if (doesResourceNotExist("/_index_template/" + template)) {
                 logger.info("Creating the index template '" + template + "'");
                 InputStream stream = ElasticSearchRestDAOV7.class.getResourceAsStream("/" + template + ".json");
                 byte[] templateSource = IOUtils.toByteArray(stream);
