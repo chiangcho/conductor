@@ -24,9 +24,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.netflix.conductor.core.events.ScriptEvaluator;
 import com.netflix.conductor.core.execution.WorkflowExecutor;
 import com.netflix.conductor.core.execution.tasks.WorkflowSystemTask;
 import com.netflix.conductor.core.utils.Utils;
@@ -108,10 +110,22 @@ public class HttpTask extends WorkflowSystemTask {
                     response.body,
                     task.getTaskId());
             if (response.statusCode > 199 && response.statusCode < 300) {
-                if (isAsyncComplete(task)) {
-                    task.setStatus(TaskModel.Status.IN_PROGRESS);
+                boolean result = this.executeFailedExpression(workflow, task, input, response);
+                if (!result) {
+                    if (isAsyncComplete(task)) {
+                        task.setStatus(TaskModel.Status.IN_PROGRESS);
+                    } else {
+                        task.setStatus(TaskModel.Status.COMPLETED);
+                    }
                 } else {
-                    task.setStatus(TaskModel.Status.COMPLETED);
+                    task.setStatus(TaskModel.Status.FAILED);
+                    if (!StringUtils.isEmpty(input.getFailedMessage())) {
+                        String reason = this.executeFailedMessage(workflow, task, input, response);
+                        task.setReasonForIncompletion(reason);
+                    } else {
+                        task.setReasonForIncompletion(
+                                String.format("script:%s·is·true", input.getFailedExpression()));
+                    }
                 }
             } else {
                 if (response.body != null) {
@@ -166,8 +180,12 @@ public class HttpTask extends WorkflowSystemTask {
 
         HttpResponse response = new HttpResponse();
         try {
+            String url = input.getUri();
+            if (!StringUtils.isEmpty(input.getVipAddress())) {
+                url = input.getVipAddress() + url;
+            }
             ResponseEntity<String> responseEntity =
-                    restTemplate.exchange(input.getUri(), input.getMethod(), request, String.class);
+                    restTemplate.exchange(url, input.getMethod(), request, String.class);
             if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.hasBody()) {
                 response.body = extractBody(responseEntity.getBody());
             }
@@ -206,6 +224,82 @@ public class HttpTask extends WorkflowSystemTask {
         }
     }
 
+    private boolean executeFailedExpression(
+            WorkflowModel workflow, TaskModel task, Input input, HttpResponse response)
+            throws Exception {
+        String scriptExpression;
+
+        try {
+            scriptExpression = input.getFailedExpression();
+            boolean result = false;
+            if (!StringUtils.isEmpty(scriptExpression)) {
+                String scriptExpressionBuilder =
+                        "function scriptFun(){" + scriptExpression + "} scriptFun();";
+
+                LOGGER.debug(
+                        "scriptExpressionBuilder: {}, task: {}",
+                        scriptExpressionBuilder,
+                        task.getTaskId());
+                Object returnValue = ScriptEvaluator.eval(scriptExpressionBuilder, response);
+
+                if (returnValue instanceof Boolean) {
+                    result = BooleanUtils.toBoolean((Boolean) returnValue);
+                }
+                if (returnValue instanceof Integer) {
+                    result = BooleanUtils.toBoolean((Integer) returnValue);
+                }
+                if (returnValue instanceof String) {
+                    result = BooleanUtils.toBoolean((String) returnValue);
+                }
+                return result;
+            }
+            return result;
+        } catch (Exception e) {
+            LOGGER.error(
+                    "Failed to execute failed expression Task: {} in workflow: {}",
+                    task.getTaskId(),
+                    workflow.getWorkflowId(),
+                    e);
+            throw new Exception(
+                    String.format(
+                            "script:%s, error message:",
+                            input.getFailedExpression(), e.getMessage()),
+                    e);
+        }
+    }
+
+    private String executeFailedMessage(
+            WorkflowModel workflow, TaskModel task, Input input, HttpResponse response)
+            throws Exception {
+        String messageScript;
+
+        try {
+            messageScript = input.getFailedMessage();
+            if (!StringUtils.isEmpty(messageScript)) {
+                String messageScriptBuilder =
+                        "function scriptFun(){" + messageScript + "} scriptFun();";
+
+                LOGGER.debug(
+                        "failedMessageBuilder: {}, task: {}",
+                        messageScriptBuilder,
+                        task.getTaskId());
+                Object returnValue = ScriptEvaluator.eval(messageScriptBuilder, response);
+                return returnValue.toString();
+            }
+            return "";
+        } catch (Exception e) {
+            LOGGER.error(
+                    "Failed to execute failed message Task: {} in workflow: {}",
+                    task.getTaskId(),
+                    workflow.getWorkflowId(),
+                    e);
+            throw new Exception(
+                    String.format(
+                            "script:%s, error message:", input.getFailedMessage(), e.getMessage()),
+                    e);
+        }
+    }
+
     @Override
     public boolean execute(WorkflowModel workflow, TaskModel task, WorkflowExecutor executor) {
         return false;
@@ -218,7 +312,7 @@ public class HttpTask extends WorkflowSystemTask {
 
     @Override
     public boolean isAsync() {
-        return true;
+        return false;
     }
 
     public static class HttpResponse {
@@ -263,7 +357,8 @@ public class HttpTask extends WorkflowSystemTask {
         private String contentType = MediaType.APPLICATION_JSON_VALUE;
         private Integer connectionTimeOut;
         private Integer readTimeOut;
-
+        private String failedExpression;
+        private String failedMessage;
         /**
          * @return the method
          */
@@ -390,6 +485,22 @@ public class HttpTask extends WorkflowSystemTask {
 
         public void setReadTimeOut(Integer readTimeOut) {
             this.readTimeOut = readTimeOut;
+        }
+
+        public String getFailedExpression() {
+            return failedExpression;
+        }
+
+        public void setFailedExpression(String failedExpression) {
+            this.failedExpression = failedExpression;
+        }
+
+        public String getFailedMessage() {
+            return failedMessage;
+        }
+
+        public void setFailedMessage(String failedMessage) {
+            this.failedMessage = failedMessage;
         }
     }
 }

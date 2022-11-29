@@ -226,6 +226,7 @@ public class HttpTaskTest {
         HttpTask.Input input = new HttpTask.Input();
         input.setUri("http://" + mockServer.getHost() + ":" + mockServer.getServerPort() + "/text");
         input.setMethod("GET");
+        input.setFailedExpression("if($.body == '" + TEXT_RESPONSE + "1') return true");
         task.getInputData().put(HttpTask.REQUEST_PARAMETER_NAME, input);
 
         httpTask.start(workflow, task, workflowExecutor);
