@@ -21,12 +21,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.FileSystemResource;
-
+import org.springframework.web.client.RestTemplate;
 // Prevents from the datasource beans to be loaded, AS they are needed only for specific databases.
 // In case that SQL database is selected this class will be imported back in the appropriate
 // database persistence module.
+
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+@EnableDiscoveryClient
 public class Conductor {
 
     private static final Logger log = LoggerFactory.getLogger(Conductor.class);
@@ -37,6 +42,11 @@ public class Conductor {
         SpringApplication.run(Conductor.class, args);
     }
 
+    @Bean
+    @LoadBalanced
+    RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
     /**
      * Reads properties from the location specified in <code>CONDUCTOR_CONFIG_FILE</code> and sets
      * them as system properties so they override the default properties.
