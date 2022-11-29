@@ -2,6 +2,7 @@ package com.netflix.conductor.contribs.listener.cvicse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,6 +10,7 @@ import com.netflix.conductor.common.run.Workflow;
 import com.netflix.conductor.common.run.WorkflowSummary;
 import com.netflix.conductor.core.events.queue.Message;
 import com.netflix.conductor.core.listener.WorkflowStatusListener;
+import com.netflix.conductor.model.WorkflowModel;
 
 import redis.clients.jedis.commands.JedisCommands;
 
@@ -32,23 +34,24 @@ public class RedisStatusPublisher implements WorkflowStatusListener {
 		this.objectMapper = objectMapper;
     }
 	
-	public void onWorkflowCompleted(Workflow workflow) {
+	public void onWorkflowCompleted(WorkflowModel workflow) {
 		LOGGER.info("Publishing callback of workflow {} on completion ", workflow.getWorkflowId());
 		this.dynoClient.lpush(("conductor-result-" + workflow.getWorkflowId()),
 				workflowToMessage(workflow).getPayload());
 
 	}
 
-	public void onWorkflowTerminated(Workflow workflow) {
+	public void onWorkflowTerminated(WorkflowModel workflow) {
 		LOGGER.info("Publishing callback of workflow {} on termination", workflow.getWorkflowId());
 		this.dynoClient.lpush(("conductor-result-" + workflow.getWorkflowId()),
 				workflowToMessage(workflow).getPayload());
 
 	}
 
-	private Message workflowToMessage(Workflow workflow) {
+	private Message workflowToMessage(WorkflowModel workflow) {
 		String jsonWfSummary;
-		WorkflowSummary summary = new WorkflowSummary(workflow);
+		
+		WorkflowSummary summary = new WorkflowSummary(this.toWorkflow(workflow));
 		try {
 			jsonWfSummary = objectMapper.writeValueAsString(summary);
 		} catch (JsonProcessingException e) {
@@ -57,4 +60,13 @@ public class RedisStatusPublisher implements WorkflowStatusListener {
 		}
 		return new Message(workflow.getWorkflowId(), jsonWfSummary, null);
 	}
+	
+	private Workflow toWorkflow(WorkflowModel workflow) {
+        Workflow wf = new Workflow();
+        BeanUtils.copyProperties(workflow, wf);
+        wf.setUpdateTime(workflow.getUpdatedTime());
+        wf.setStartTime(workflow.getCreateTime());
+        return wf;
+	}
+
 }
