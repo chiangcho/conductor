@@ -38,6 +38,7 @@ ext {
     revJerseyCommon = '2.22.2'
     revJsonPath = '2.4.0'
     revJq = '0.0.13'
+    revGroovy = '3.0.13'
     revJsr311Api = '1.1.1'
     revMockServerClient = '5.12.0'
     revOpenapi = '1.6.+'

@@ -13,6 +13,7 @@ dependencies {
     testImplementation project(':conductor-grpc-client')
     testImplementation project(':conductor-json-jq-task')
     testImplementation project(':conductor-http-task')
+    testImplementation project(':conductor-contribs')
 
     testImplementation "org.springframework.retry:spring-retry"
 
