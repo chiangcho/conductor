@@ -195,7 +195,7 @@ Changes to configurations:
 | workflow.elasticsearch.auto.index.management.enabled | conductor.elasticsearch.autoIndexManagementEnabled | true |
 | workflow.elasticsearch.document.type.override | conductor.elasticsearch.documentTypeOverride | "" |
 
-`es7-persistence` module:
+### `es7-persistence` module:
 
 | Old | New | Default |
 | --- | --- | --- |
