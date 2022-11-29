@@ -17,15 +17,39 @@
 -->
 <!-- default log configuration -->
 <Configuration status="WARN">
+    <Properties>
+        <Property name="LOG_HOME">${sys:app.log.home:-logs}</Property>
+        <Property name="PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %c{1.} - %m%n</Property>
+    </Properties>
     <Appenders>
+        <RollingFile name="app-log" fileName="${LOG_HOME}/all/app.log"
+                     filePattern="${LOG_HOME}/all/app.log-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout charset="UTF-8" pattern="${PATTERN}"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100MB"/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <OnStartupTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="10">
+                <Delete basePath="%{LOG_HOME}/all" maxDepth="1">
+                    <IfFileName glob="*.log">
+                        <IfAny>
+                            <IfLastModified age="365d" />
+                            <IfAccumulatedFileSize exceeds="14G" />
+                        </IfAny>
+                    </IfFileName>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
         <Console name="CONSOLE">
-            <PatternLayout pattern="%-4r [%t] %-5p %c %x - %m%n"/>
+            <PatternLayout pattern="${PATTERN}"/>
         </Console>
     </Appenders>
 
     <Loggers>
         <Root level="INFO">
             <AppenderRef ref="CONSOLE" />
+            <AppenderRef REF="app-log" />
         </Root>
     </Loggers>
 </Configuration>
