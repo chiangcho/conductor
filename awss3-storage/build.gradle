@@ -14,8 +14,37 @@
 dependencies {
     implementation project(':conductor-common')
     implementation project(':conductor-core')
+<<<<<<< HEAD
     compileOnly 'org.springframework.boot:spring-boot-starter'
 
     implementation "com.amazonaws:aws-java-sdk-s3:${revAwsSdk}"
     implementation "org.apache.commons:commons-lang3"
 }
+=======
+
+    compileOnly 'org.springframework.boot:spring-boot-starter'
+
+<<<<<<< HEAD:es7-persistence/build.gradle
+    implementation "commons-io:commons-io:${revCommonsIo}"
+    implementation "org.apache.commons:commons-lang3"
+    // SBMTODO: remove guava dep
+    implementation "com.google.guava:guava:${revGuava}"
+
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation "com.fasterxml.jackson.core:jackson-core"
+
+    implementation "org.elasticsearch:elasticsearch:${revElasticSearch7}"
+    implementation "org.elasticsearch.client:transport:${revElasticSearch7}"
+    implementation "org.elasticsearch.client:elasticsearch-rest-client:${revElasticSearch7}"
+    implementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:${revElasticSearch7}"
+
+    testImplementation "org.awaitility:awaitility:${revAwaitility}"
+    testImplementation "org.testcontainers:elasticsearch:${revTestContainer}"
+    testImplementation project(':conductor-common').sourceSets.test.output
+}
+=======
+    implementation "com.amazonaws:aws-java-sdk-s3:${revAwsSdk}"
+    implementation "org.apache.commons:commons-lang3"
+}
+>>>>>>> 03f8d96dfd31e89b327831095cf052d73a66db41:awss3-storage/build.gradle
+>>>>>>> 03f8d96dfd31e89b327831095cf052d73a66db41
