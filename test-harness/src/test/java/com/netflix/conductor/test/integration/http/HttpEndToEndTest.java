@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,10 +12,12 @@
  */
 package com.netflix.conductor.test.integration.http;
 
+import org.junit.Before;
+
+import com.netflix.conductor.client.http.EventClient;
 import com.netflix.conductor.client.http.MetadataClient;
 import com.netflix.conductor.client.http.TaskClient;
 import com.netflix.conductor.client.http.WorkflowClient;
-import org.junit.Before;
 
 public class HttpEndToEndTest extends AbstractHttpEndToEndTest {
 
@@ -31,5 +33,8 @@ public class HttpEndToEndTest extends AbstractHttpEndToEndTest {
 
         metadataClient = new MetadataClient();
         metadataClient.setRootURI(apiRoot);
+
+        eventClient = new EventClient();
+        eventClient.setRootURI(apiRoot);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,6 +15,7 @@ package com.netflix.conductor.test.integration
 import com.netflix.conductor.common.metadata.tasks.Task
 import com.netflix.conductor.common.run.Workflow
 import com.netflix.conductor.test.base.AbstractSpecification
+
 import spock.lang.Shared
 
 class SetVariableTaskSpec extends AbstractSpecification {
@@ -34,8 +35,8 @@ class SetVariableTaskSpec extends AbstractSpecification {
         workflowInput['var'] = "var_test_value"
 
         when: "Start the workflow which has the set variable task"
-        def workflowInstanceId = workflowExecutor.startWorkflow(SET_VARIABLE_WF, 1,
-                '', workflowInput, null, null, null)
+        def workflowInstanceId = startWorkflow(SET_VARIABLE_WF, 1,
+                '', workflowInput, null)
 
         then: "verify that the task is completed and variables were set"
         with(workflowExecutionService.getExecutionStatus(workflowInstanceId, true)) {
@@ -56,12 +57,12 @@ class SetVariableTaskSpec extends AbstractSpecification {
                 Collections.nCopies(1 + ((int) (maxThreshold * 1024 / 8)), "01234567"))
 
         when: "Start the workflow which has the set variable task"
-        def workflowInstanceId = workflowExecutor.startWorkflow(SET_VARIABLE_WF, 1,
-                '', workflowInput, null, null, null)
+        def workflowInstanceId = startWorkflow(SET_VARIABLE_WF, 1,
+                '', workflowInput, null)
         def EXTRA_HASHMAP_SIZE = 17
         def expectedErrorMessage =
                 String.format(
-                        "The variables payload size: %dB of workflow: %s is greater than the permissible limit: %dKB",
+                        "The variables payload size: %d of workflow: %s is greater than the permissible limit: %d bytes",
                         EXTRA_HASHMAP_SIZE + maxThreshold * 1024 + 1, workflowInstanceId, maxThreshold)
 
         then: "verify that the task is completed and variables were set"

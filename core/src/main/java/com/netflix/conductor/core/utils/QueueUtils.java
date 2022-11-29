@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,29 +12,41 @@
  */
 package com.netflix.conductor.core.utils;
 
-import com.netflix.conductor.common.metadata.tasks.Task;
 import org.apache.commons.lang3.StringUtils;
+
+import com.netflix.conductor.common.metadata.tasks.Task;
+import com.netflix.conductor.model.TaskModel;
 
 public class QueueUtils {
 
     public static final String DOMAIN_SEPARATOR = ":";
-    public static final String ISOLATION_SEPARATOR = "-";
-    public static final String EXECUTION_NAME_SPACE_SEPRATOR = "@";
+    private static final String ISOLATION_SEPARATOR = "-";
+    private static final String EXECUTION_NAME_SPACE_SEPARATOR = "@";
+
+    public static String getQueueName(TaskModel taskModel) {
+        return getQueueName(
+                taskModel.getTaskType(),
+                taskModel.getDomain(),
+                taskModel.getIsolationGroupId(),
+                taskModel.getExecutionNameSpace());
+    }
 
     public static String getQueueName(Task task) {
-        return getQueueName(task.getTaskType(), task.getDomain(), task.getIsolationGroupId(),
-            task.getExecutionNameSpace());
+        return getQueueName(
+                task.getTaskType(),
+                task.getDomain(),
+                task.getIsolationGroupId(),
+                task.getExecutionNameSpace());
     }
 
     /**
-     * @param taskType
-     * @param domain
-     * @param isolationGroup
-     * @param executionNameSpace
-     * @return //domain:taskType@eexecutionNameSpace-isolationGroup
+     * Creates a queue name string using <code>taskType</code>, <code>domain</code>, <code>
+     * isolationGroupId</code> and <code>executionNamespace</code>.
+     *
+     * @return domain:taskType@eexecutionNameSpace-isolationGroupId.
      */
-    public static String getQueueName(String taskType, String domain, String isolationGroup,
-        String executionNameSpace) {
+    public static String getQueueName(
+            String taskType, String domain, String isolationGroupId, String executionNamespace) {
 
         String queueName;
         if (domain == null) {
@@ -43,12 +55,12 @@ public class QueueUtils {
             queueName = domain + DOMAIN_SEPARATOR + taskType;
         }
 
-        if (executionNameSpace != null) {
-            queueName = queueName + EXECUTION_NAME_SPACE_SEPRATOR + executionNameSpace;
+        if (executionNamespace != null) {
+            queueName = queueName + EXECUTION_NAME_SPACE_SEPARATOR + executionNamespace;
         }
 
-        if (isolationGroup != null) {
-            queueName = queueName + ISOLATION_SEPARATOR + isolationGroup;
+        if (isolationGroupId != null) {
+            queueName = queueName + ISOLATION_SEPARATOR + isolationGroupId;
         }
         return queueName;
     }
@@ -58,11 +70,12 @@ public class QueueUtils {
     }
 
     public static String getExecutionNameSpace(String queueName) {
-        if (StringUtils.contains(queueName, ISOLATION_SEPARATOR) && StringUtils
-            .contains(queueName, EXECUTION_NAME_SPACE_SEPRATOR)) {
-            return StringUtils.substringBetween(queueName, EXECUTION_NAME_SPACE_SEPRATOR, ISOLATION_SEPARATOR);
-        } else if (StringUtils.contains(queueName, EXECUTION_NAME_SPACE_SEPRATOR)) {
-            return StringUtils.substringAfter(queueName, EXECUTION_NAME_SPACE_SEPRATOR);
+        if (StringUtils.contains(queueName, ISOLATION_SEPARATOR)
+                && StringUtils.contains(queueName, EXECUTION_NAME_SPACE_SEPARATOR)) {
+            return StringUtils.substringBetween(
+                    queueName, EXECUTION_NAME_SPACE_SEPARATOR, ISOLATION_SEPARATOR);
+        } else if (StringUtils.contains(queueName, EXECUTION_NAME_SPACE_SEPARATOR)) {
+            return StringUtils.substringAfter(queueName, EXECUTION_NAME_SPACE_SEPARATOR);
         } else {
             return StringUtils.EMPTY;
         }
@@ -89,7 +102,7 @@ public class QueueUtils {
         } else {
             startIndex = domainSeperatorIndex + 1;
         }
-        int endIndex = StringUtils.indexOf(queue, EXECUTION_NAME_SPACE_SEPRATOR);
+        int endIndex = StringUtils.indexOf(queue, EXECUTION_NAME_SPACE_SEPARATOR);
 
         if (endIndex == -1) {
             endIndex = StringUtils.lastIndexOf(queue, ISOLATION_SEPARATOR);

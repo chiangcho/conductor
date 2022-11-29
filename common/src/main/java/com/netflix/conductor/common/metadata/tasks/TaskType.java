@@ -1,38 +1,41 @@
 /*
- *  Copyright 2021 Netflix, Inc.
- *  <p>
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  the License. You may obtain a copy of the License at
- *  <p>
- *  http://www.apache.org/licenses/LICENSE-2.0
- *  <p>
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- *  specific language governing permissions and limitations under the License.
+ * Copyright 2021 Netflix, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.netflix.conductor.common.metadata.tasks;
-
-import com.github.vmg.protogen.annotations.ProtoEnum;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import com.netflix.conductor.annotations.protogen.ProtoEnum;
+
 @ProtoEnum
 public enum TaskType {
-
     SIMPLE,
     DYNAMIC,
     FORK_JOIN,
     FORK_JOIN_DYNAMIC,
     DECISION,
+    SWITCH,
     JOIN,
     DO_WHILE,
     SUB_WORKFLOW,
+    START_WORKFLOW,
     EVENT,
     WAIT,
+    HUMAN,
     USER_DEFINED,
     HTTP,
     LAMBDA,
+    INLINE,
     EXCLUSIVE_JOIN,
     TERMINATE,
     KAFKA_PUBLISH,
@@ -40,21 +43,26 @@ public enum TaskType {
     SET_VARIABLE;
 
     /**
-     * TaskType constants representing each of the possible enumeration values. Motivation: to not have any
-     * hardcoded/inline strings used in the code.
+     * TaskType constants representing each of the possible enumeration values. Motivation: to not
+     * have any hardcoded/inline strings used in the code.
      */
     public static final String TASK_TYPE_DECISION = "DECISION";
+
+    public static final String TASK_TYPE_SWITCH = "SWITCH";
     public static final String TASK_TYPE_DYNAMIC = "DYNAMIC";
     public static final String TASK_TYPE_JOIN = "JOIN";
     public static final String TASK_TYPE_DO_WHILE = "DO_WHILE";
     public static final String TASK_TYPE_FORK_JOIN_DYNAMIC = "FORK_JOIN_DYNAMIC";
     public static final String TASK_TYPE_EVENT = "EVENT";
     public static final String TASK_TYPE_WAIT = "WAIT";
+    public static final String TASK_TYPE_HUMAN = "HUMAN";
     public static final String TASK_TYPE_SUB_WORKFLOW = "SUB_WORKFLOW";
+    public static final String TASK_TYPE_START_WORKFLOW = "START_WORKFLOW";
     public static final String TASK_TYPE_FORK_JOIN = "FORK_JOIN";
     public static final String TASK_TYPE_SIMPLE = "SIMPLE";
     public static final String TASK_TYPE_HTTP = "HTTP";
     public static final String TASK_TYPE_LAMBDA = "LAMBDA";
+    public static final String TASK_TYPE_INLINE = "INLINE";
     public static final String TASK_TYPE_EXCLUSIVE_JOIN = "EXCLUSIVE_JOIN";
     public static final String TASK_TYPE_TERMINATE = "TERMINATE";
     public static final String TASK_TYPE_KAFKA_PUBLISH = "KAFKA_PUBLISH";
@@ -66,6 +74,7 @@ public enum TaskType {
 
     static {
         BUILT_IN_TASKS.add(TASK_TYPE_DECISION);
+        BUILT_IN_TASKS.add(TASK_TYPE_SWITCH);
         BUILT_IN_TASKS.add(TASK_TYPE_FORK);
         BUILT_IN_TASKS.add(TASK_TYPE_JOIN);
         BUILT_IN_TASKS.add(TASK_TYPE_EXCLUSIVE_JOIN);
@@ -73,10 +82,11 @@ public enum TaskType {
     }
 
     /**
-     * Converts a task type string to {@link TaskType}. For an unknown string, the value is defaulted
-     * to {@link TaskType#USER_DEFINED}.
-     * <p>
-     * NOTE: Use {@link Enum#valueOf(Class, String)} if the default of USER_DEFINED is not necessary.
+     * Converts a task type string to {@link TaskType}. For an unknown string, the value is
+     * defaulted to {@link TaskType#USER_DEFINED}.
+     *
+     * <p>NOTE: Use {@link Enum#valueOf(Class, String)} if the default of USER_DEFINED is not
+     * necessary.
      *
      * @param taskType The task type string.
      * @return The {@link TaskType} enum.

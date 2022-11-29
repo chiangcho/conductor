@@ -12,21 +12,6 @@
  */
 package com.netflix.conductor.common.metadata.workflow;
 
-import com.github.vmg.protogen.annotations.ProtoEnum;
-import com.github.vmg.protogen.annotations.ProtoField;
-import com.github.vmg.protogen.annotations.ProtoMessage;
-import com.netflix.conductor.common.constraints.NoSemiColonConstraint;
-import com.netflix.conductor.common.constraints.OwnerEmailMandatoryConstraint;
-import com.netflix.conductor.common.constraints.TaskReferenceNameUniqueConstraint;
-import com.netflix.conductor.common.metadata.Auditable;
-import com.netflix.conductor.common.metadata.tasks.TaskType;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -34,16 +19,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
+import com.netflix.conductor.annotations.protogen.ProtoEnum;
+import com.netflix.conductor.annotations.protogen.ProtoField;
+import com.netflix.conductor.annotations.protogen.ProtoMessage;
+import com.netflix.conductor.common.constraints.NoSemiColonConstraint;
+import com.netflix.conductor.common.constraints.OwnerEmailMandatoryConstraint;
+import com.netflix.conductor.common.constraints.TaskReferenceNameUniqueConstraint;
+import com.netflix.conductor.common.metadata.BaseDef;
+import com.netflix.conductor.common.metadata.tasks.TaskType;
+
 @ProtoMessage
 @TaskReferenceNameUniqueConstraint
-public class WorkflowDef extends Auditable {
+public class WorkflowDef extends BaseDef {
 
     @ProtoEnum
-    public enum TimeoutPolicy {TIME_OUT_WF, ALERT_ONLY}
+    public enum TimeoutPolicy {
+        TIME_OUT_WF,
+        ALERT_ONLY
+    }
 
     @NotEmpty(message = "WorkflowDef name cannot be null or empty")
     @ProtoField(id = 1)
-    @NoSemiColonConstraint(message = "Workflow name cannot contain the following set of characters: ':'")
+    @NoSemiColonConstraint(
+            message = "Workflow name cannot contain the following set of characters: ':'")
     private String name;
 
     @ProtoField(id = 2)
@@ -71,7 +76,7 @@ public class WorkflowDef extends Auditable {
     @Max(value = 2, message = "workflowDef schemaVersion: {value} is only supported")
     private int schemaVersion = 2;
 
-    //By default a workflow is restartable
+    // By default, a workflow is restartable
     @ProtoField(id = 9)
     private boolean restartable = true;
 
@@ -92,6 +97,9 @@ public class WorkflowDef extends Auditable {
 
     @ProtoField(id = 14)
     private Map<String, Object> variables = new HashMap<>();
+
+    @ProtoField(id = 15)
+    private Map<String, Object> inputTemplate = new HashMap<>();
 
     /**
      * @return the name
@@ -203,7 +211,8 @@ public class WorkflowDef extends Auditable {
     /**
      * This method is called only when the workflow definition is created
      *
-     * @param restartable true: if the workflow is restartable false: if the workflow is non restartable
+     * @param restartable true: if the workflow is restartable false: if the workflow is non
+     *     restartable
      */
     public void setRestartable(boolean restartable) {
         this.restartable = restartable;
@@ -231,7 +240,8 @@ public class WorkflowDef extends Auditable {
     }
 
     /**
-     * Specify if workflow listener is enabled to invoke a callback for completed or terminated workflows
+     * Specify if workflow listener is enabled to invoke a callback for completed or terminated
+     * workflows
      *
      * @param workflowStatusListenerEnabled
      */
@@ -295,6 +305,14 @@ public class WorkflowDef extends Auditable {
         this.variables = variables;
     }
 
+    public Map<String, Object> getInputTemplate() {
+        return inputTemplate;
+    }
+
+    public void setInputTemplate(Map<String, Object> inputTemplate) {
+        this.inputTemplate = inputTemplate;
+    }
+
     public String key() {
         return getKey(name, version);
     }
@@ -323,8 +341,9 @@ public class WorkflowDef extends Auditable {
             WorkflowTask nextTask = task.next(taskReferenceName, null);
             if (nextTask != null) {
                 return nextTask;
-            } else if (TaskType.DO_WHILE.name().equals(task.getType()) && !task.getTaskReferenceName()
-                .equals(taskReferenceName) && task.has(taskReferenceName)) {
+            } else if (TaskType.DO_WHILE.name().equals(task.getType())
+                    && !task.getTaskReferenceName().equals(taskReferenceName)
+                    && task.has(taskReferenceName)) {
                 // If the task is child of Loop Task and at last position, return null.
                 return null;
             }
@@ -341,9 +360,11 @@ public class WorkflowDef extends Auditable {
 
     public WorkflowTask getTaskByRefName(String taskReferenceName) {
         return collectTasks().stream()
-            .filter(workflowTask -> workflowTask.getTaskReferenceName().equals(taskReferenceName))
-            .findFirst()
-            .orElse(null);
+                .filter(
+                        workflowTask ->
+                                workflowTask.getTaskReferenceName().equals(taskReferenceName))
+                .findFirst()
+                .orElse(null);
     }
 
     public List<WorkflowTask> collectTasks() {
@@ -363,22 +384,21 @@ public class WorkflowDef extends Auditable {
             return false;
         }
         WorkflowDef that = (WorkflowDef) o;
-        return getVersion() == that.getVersion() &&
-            getSchemaVersion() == that.getSchemaVersion() &&
-            Objects.equals(getName(), that.getName()) &&
-            Objects.equals(getDescription(), that.getDescription()) &&
-            Objects.equals(getTasks(), that.getTasks()) &&
-            Objects.equals(getInputParameters(), that.getInputParameters()) &&
-            Objects.equals(getOutputParameters(), that.getOutputParameters()) &&
-            Objects.equals(getFailureWorkflow(), that.getFailureWorkflow()) &&
-            Objects.equals(getOwnerEmail(), that.getOwnerEmail()) &&
-            Objects.equals(getTimeoutSeconds(), that.getTimeoutSeconds());
+        return getVersion() == that.getVersion()
+                && getSchemaVersion() == that.getSchemaVersion()
+                && Objects.equals(getName(), that.getName())
+                && Objects.equals(getDescription(), that.getDescription())
+                && Objects.equals(getTasks(), that.getTasks())
+                && Objects.equals(getInputParameters(), that.getInputParameters())
+                && Objects.equals(getOutputParameters(), that.getOutputParameters())
+                && Objects.equals(getFailureWorkflow(), that.getFailureWorkflow())
+                && Objects.equals(getOwnerEmail(), that.getOwnerEmail())
+                && Objects.equals(getTimeoutSeconds(), that.getTimeoutSeconds());
     }
 
     @Override
     public int hashCode() {
-        return Objects
-            .hash(
+        return Objects.hash(
                 getName(),
                 getDescription(),
                 getVersion(),
@@ -388,24 +408,37 @@ public class WorkflowDef extends Auditable {
                 getFailureWorkflow(),
                 getSchemaVersion(),
                 getOwnerEmail(),
-                getTimeoutSeconds()
-            );
+                getTimeoutSeconds());
     }
 
     @Override
     public String toString() {
-        return "WorkflowDef{" +
-            "name='" + name + '\'' +
-            ", description='" + description + '\'' +
-            ", version=" + version +
-            ", tasks=" + tasks +
-            ", inputParameters=" + inputParameters +
-            ", outputParameters=" + outputParameters +
-            ", failureWorkflow='" + failureWorkflow + '\'' +
-            ", schemaVersion=" + schemaVersion +
-            ", restartable=" + restartable +
-            ", workflowStatusListenerEnabled=" + workflowStatusListenerEnabled +
-            ", timeoutSeconds=" + timeoutSeconds +
-            '}';
+        return "WorkflowDef{"
+                + "name='"
+                + name
+                + '\''
+                + ", description='"
+                + description
+                + '\''
+                + ", version="
+                + version
+                + ", tasks="
+                + tasks
+                + ", inputParameters="
+                + inputParameters
+                + ", outputParameters="
+                + outputParameters
+                + ", failureWorkflow='"
+                + failureWorkflow
+                + '\''
+                + ", schemaVersion="
+                + schemaVersion
+                + ", restartable="
+                + restartable
+                + ", workflowStatusListenerEnabled="
+                + workflowStatusListenerEnabled
+                + ", timeoutSeconds="
+                + timeoutSeconds
+                + '}';
     }
 }

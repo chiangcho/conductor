@@ -12,13 +12,21 @@
  */
 package com.netflix.conductor.test.integration.grpc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import com.netflix.conductor.client.grpc.EventClient;
 import com.netflix.conductor.client.grpc.MetadataClient;
 import com.netflix.conductor.client.grpc.TaskClient;
 import com.netflix.conductor.client.grpc.WorkflowClient;
+import com.netflix.conductor.common.metadata.events.EventHandler;
 import com.netflix.conductor.common.metadata.tasks.Task;
 import com.netflix.conductor.common.metadata.tasks.Task.Status;
 import com.netflix.conductor.common.metadata.tasks.TaskDef;
@@ -33,31 +41,28 @@ import com.netflix.conductor.common.run.Workflow;
 import com.netflix.conductor.common.run.Workflow.WorkflowStatus;
 import com.netflix.conductor.common.run.WorkflowSummary;
 import com.netflix.conductor.test.integration.AbstractEndToEndTest;
-import java.util.LinkedList;
-import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(properties = {
-    "conductor.grpc-server.enabled=true",
-    "conductor.grpc-server.port=8092"
-})
+@SpringBootTest(
+        properties = {"conductor.grpc-server.enabled=true", "conductor.grpc-server.port=8092"})
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
 public abstract class AbstractGrpcEndToEndTest extends AbstractEndToEndTest {
 
     protected static TaskClient taskClient;
     protected static WorkflowClient workflowClient;
     protected static MetadataClient metadataClient;
+    protected static EventClient eventClient;
 
     @Override
     protected String startWorkflow(String workflowExecutionName, WorkflowDef workflowDefinition) {
-        StartWorkflowRequest workflowRequest = new StartWorkflowRequest()
-            .withName(workflowExecutionName)
-            .withWorkflowDef(workflowDefinition);
+        StartWorkflowRequest workflowRequest =
+                new StartWorkflowRequest()
+                        .withName(workflowExecutionName)
+                        .withWorkflowDef(workflowDefinition);
         return workflowClient.startWorkflow(workflowRequest);
     }
 
@@ -74,6 +79,21 @@ public abstract class AbstractGrpcEndToEndTest extends AbstractEndToEndTest {
     @Override
     protected void registerTaskDefinitions(List<TaskDef> taskDefinitionList) {
         metadataClient.registerTaskDefs(taskDefinitionList);
+    }
+
+    @Override
+    protected void registerWorkflowDefinition(WorkflowDef workflowDefinition) {
+        metadataClient.registerWorkflowDef(workflowDefinition);
+    }
+
+    @Override
+    protected void registerEventHandler(EventHandler eventHandler) {
+        eventClient.registerEventHandler(eventHandler);
+    }
+
+    @Override
+    protected Iterator<EventHandler> getEventHandlers(String event, boolean activeOnly) {
+        return eventClient.getEventHandlers(event, activeOnly);
     }
 
     @Test
@@ -125,12 +145,14 @@ public abstract class AbstractGrpcEndToEndTest extends AbstractEndToEndTest {
         assertEquals(t0.getTaskReferenceName(), workflow.getTasks().get(0).getReferenceTaskName());
         assertEquals(workflowId, workflow.getWorkflowId());
 
-        List<String> runningIds = workflowClient.getRunningWorkflow(def.getName(), def.getVersion());
+        List<String> runningIds =
+                workflowClient.getRunningWorkflow(def.getName(), def.getVersion());
         assertNotNull(runningIds);
         assertEquals(1, runningIds.size());
         assertEquals(workflowId, runningIds.get(0));
 
-        List<Task> polled = taskClient.batchPollTasksByTaskType("non existing task", "test", 1, 100);
+        List<Task> polled =
+                taskClient.batchPollTasksByTaskType("non existing task", "test", 1, 100);
         assertNotNull(polled);
         assertEquals(0, polled.size());
 
@@ -162,25 +184,32 @@ public abstract class AbstractGrpcEndToEndTest extends AbstractEndToEndTest {
         assertEquals(task.getTaskId(), taskById.getTaskId());
 
         Thread.sleep(1000);
-        SearchResult<WorkflowSummary> searchResult = workflowClient.search("workflowType='" + def.getName() + "'");
+        SearchResult<WorkflowSummary> searchResult =
+                workflowClient.search("workflowType='" + def.getName() + "'");
         assertNotNull(searchResult);
         assertEquals(1, searchResult.getTotalHits());
         assertEquals(workflow.getWorkflowId(), searchResult.getResults().get(0).getWorkflowId());
 
-        SearchResult<Workflow> searchResultV2 = workflowClient.searchV2("workflowType='" + def.getName() + "'");
+        SearchResult<Workflow> searchResultV2 =
+                workflowClient.searchV2("workflowType='" + def.getName() + "'");
         assertNotNull(searchResultV2);
         assertEquals(1, searchResultV2.getTotalHits());
         assertEquals(workflow.getWorkflowId(), searchResultV2.getResults().get(0).getWorkflowId());
 
-        SearchResult<WorkflowSummary> searchResultAdvanced = workflowClient.search(0,1,null,null,"workflowType='" + def.getName() + "'");
+        SearchResult<WorkflowSummary> searchResultAdvanced =
+                workflowClient.search(0, 1, null, null, "workflowType='" + def.getName() + "'");
         assertNotNull(searchResultAdvanced);
         assertEquals(1, searchResultAdvanced.getTotalHits());
-        assertEquals(workflow.getWorkflowId(), searchResultAdvanced.getResults().get(0).getWorkflowId());
+        assertEquals(
+                workflow.getWorkflowId(), searchResultAdvanced.getResults().get(0).getWorkflowId());
 
-        SearchResult<Workflow> searchResultV2Advanced = workflowClient.searchV2(0,1,null,null,"workflowType='" + def.getName() + "'");
+        SearchResult<Workflow> searchResultV2Advanced =
+                workflowClient.searchV2(0, 1, null, null, "workflowType='" + def.getName() + "'");
         assertNotNull(searchResultV2Advanced);
         assertEquals(1, searchResultV2Advanced.getTotalHits());
-        assertEquals(workflow.getWorkflowId(), searchResultV2Advanced.getResults().get(0).getWorkflowId());
+        assertEquals(
+                workflow.getWorkflowId(),
+                searchResultV2Advanced.getResults().get(0).getWorkflowId());
 
         SearchResult<TaskSummary> taskSearchResult =
                 taskClient.search("taskType='" + t0.getName() + "'");
@@ -189,7 +218,7 @@ public abstract class AbstractGrpcEndToEndTest extends AbstractEndToEndTest {
         assertEquals(t0.getName(), taskSearchResult.getResults().get(0).getTaskDefName());
 
         SearchResult<TaskSummary> taskSearchResultAdvanced =
-                taskClient.search(0,1,null,null,"taskType='" + t0.getName() + "'");
+                taskClient.search(0, 1, null, null, "taskType='" + t0.getName() + "'");
         assertNotNull(taskSearchResultAdvanced);
         assertEquals(1, taskSearchResultAdvanced.getTotalHits());
         assertEquals(t0.getName(), taskSearchResultAdvanced.getResults().get(0).getTaskDefName());
@@ -198,13 +227,17 @@ public abstract class AbstractGrpcEndToEndTest extends AbstractEndToEndTest {
                 taskClient.searchV2("taskType='" + t0.getName() + "'");
         assertNotNull(taskSearchResultV2);
         assertEquals(1, searchResultV2Advanced.getTotalHits());
-        assertEquals(t0.getTaskReferenceName(), taskSearchResultV2.getResults().get(0).getReferenceTaskName());
+        assertEquals(
+                t0.getTaskReferenceName(),
+                taskSearchResultV2.getResults().get(0).getReferenceTaskName());
 
         SearchResult<Task> taskSearchResultV2Advanced =
-                taskClient.searchV2(0,1,null,null,"taskType='" + t0.getName() + "'");
+                taskClient.searchV2(0, 1, null, null, "taskType='" + t0.getName() + "'");
         assertNotNull(taskSearchResultV2Advanced);
         assertEquals(1, taskSearchResultV2Advanced.getTotalHits());
-        assertEquals(t0.getTaskReferenceName(), taskSearchResultV2Advanced.getResults().get(0).getReferenceTaskName());
+        assertEquals(
+                t0.getTaskReferenceName(),
+                taskSearchResultV2Advanced.getResults().get(0).getReferenceTaskName());
 
         workflowClient.terminateWorkflow(workflowId, "terminate reason");
         workflow = workflowClient.getWorkflow(workflowId, true);

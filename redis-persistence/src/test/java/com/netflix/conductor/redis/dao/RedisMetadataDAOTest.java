@@ -1,35 +1,16 @@
 /*
- *  Copyright 2021 Netflix, Inc.
- *  <p>
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  the License. You may obtain a copy of the License at
- *  <p>
- *  http://www.apache.org/licenses/LICENSE-2.0
- *  <p>
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- *  specific language governing permissions and limitations under the License.
+ * Copyright 2021 Netflix, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.netflix.conductor.redis.dao;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.netflix.conductor.common.config.TestObjectMapperConfiguration;
-import com.netflix.conductor.common.metadata.tasks.TaskDef;
-import com.netflix.conductor.common.metadata.tasks.TaskDef.RetryLogic;
-import com.netflix.conductor.common.metadata.tasks.TaskDef.TimeoutPolicy;
-import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
-import com.netflix.conductor.core.config.ConductorProperties;
-import com.netflix.conductor.core.exception.ApplicationException;
-import com.netflix.conductor.redis.config.RedisProperties;
-import com.netflix.conductor.redis.jedis.JedisMock;
-import com.netflix.conductor.redis.jedis.JedisProxy;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
-import redis.clients.jedis.commands.JedisCommands;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -38,6 +19,28 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import com.netflix.conductor.common.config.TestObjectMapperConfiguration;
+import com.netflix.conductor.common.metadata.tasks.TaskDef;
+import com.netflix.conductor.common.metadata.tasks.TaskDef.RetryLogic;
+import com.netflix.conductor.common.metadata.tasks.TaskDef.TimeoutPolicy;
+import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
+import com.netflix.conductor.core.config.ConductorProperties;
+import com.netflix.conductor.core.exception.ConflictException;
+import com.netflix.conductor.core.exception.NotFoundException;
+import com.netflix.conductor.redis.config.RedisProperties;
+import com.netflix.conductor.redis.jedis.JedisMock;
+import com.netflix.conductor.redis.jedis.JedisProxy;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import redis.clients.jedis.commands.JedisCommands;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,8 +54,7 @@ public class RedisMetadataDAOTest {
 
     private RedisMetadataDAO redisMetadataDAO;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Autowired private ObjectMapper objectMapper;
 
     @Before
     public void init() {
@@ -62,10 +64,11 @@ public class RedisMetadataDAOTest {
         JedisCommands jedisMock = new JedisMock();
         JedisProxy jedisProxy = new JedisProxy(jedisMock);
 
-        redisMetadataDAO = new RedisMetadataDAO(jedisProxy, objectMapper, conductorProperties, properties);
+        redisMetadataDAO =
+                new RedisMetadataDAO(jedisProxy, objectMapper, conductorProperties, properties);
     }
 
-    @Test(expected = ApplicationException.class)
+    @Test(expected = ConflictException.class)
     public void testDup() {
         WorkflowDef def = new WorkflowDef();
         def.setName("testDup");
@@ -157,7 +160,7 @@ public class RedisMetadataDAOTest {
         assertEquals(workflow.getVersion(), 3);
     }
 
-    @Test(expected = ApplicationException.class)
+    @Test(expected = NotFoundException.class)
     public void removeInvalidWorkflowDef() {
         redisMetadataDAO.removeWorkflowDef("hello", 1);
     }
@@ -218,8 +221,38 @@ public class RedisMetadataDAOTest {
         assertEquals(def.getName(), all.get(0).getName());
     }
 
-    @Test(expected = ApplicationException.class)
+    @Test(expected = NotFoundException.class)
     public void testRemoveTaskDef() {
-        redisMetadataDAO.removeTaskDef("test" + UUID.randomUUID().toString());
+        redisMetadataDAO.removeTaskDef("test" + UUID.randomUUID());
+    }
+
+    @Test
+    public void testDefaultsAreSetForResponseTimeout() {
+        TaskDef def = new TaskDef("taskA");
+        def.setDescription("description");
+        def.setCreatedBy("unit_test");
+        def.setCreateTime(1L);
+        def.setInputKeys(Arrays.asList("a", "b", "c"));
+        def.setOutputKeys(Arrays.asList("01", "o2"));
+        def.setOwnerApp("ownerApp");
+        def.setRetryCount(3);
+        def.setRetryDelaySeconds(100);
+        def.setRetryLogic(RetryLogic.FIXED);
+        def.setTimeoutPolicy(TimeoutPolicy.ALERT_ONLY);
+        def.setUpdatedBy("unit_test2");
+        def.setUpdateTime(2L);
+        def.setRateLimitPerFrequency(50);
+        def.setRateLimitFrequencyInSeconds(1);
+        def.setResponseTimeoutSeconds(0);
+
+        redisMetadataDAO.createTaskDef(def);
+
+        TaskDef found = redisMetadataDAO.getTaskDef(def.getName());
+        assertEquals(found.getResponseTimeoutSeconds(), 3600);
+        found.setTimeoutSeconds(200);
+        found.setResponseTimeoutSeconds(0);
+        redisMetadataDAO.updateTaskDef(found);
+        TaskDef foundNew = redisMetadataDAO.getTaskDef(def.getName());
+        assertEquals(foundNew.getResponseTimeoutSeconds(), 199);
     }
 }

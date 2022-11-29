@@ -12,24 +12,23 @@
  */
 package com.netflix.conductor.common.run;
 
-import com.github.vmg.protogen.annotations.ProtoField;
-import com.github.vmg.protogen.annotations.ProtoMessage;
-import com.netflix.conductor.common.metadata.tasks.Task;
-import com.netflix.conductor.common.metadata.tasks.Task.Status;
-import com.netflix.conductor.common.utils.SummaryUtil;
-import org.apache.commons.lang3.StringUtils;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 import java.util.TimeZone;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.netflix.conductor.annotations.protogen.ProtoField;
+import com.netflix.conductor.annotations.protogen.ProtoMessage;
+import com.netflix.conductor.common.metadata.tasks.Task;
+import com.netflix.conductor.common.metadata.tasks.Task.Status;
+import com.netflix.conductor.common.utils.SummaryUtil;
+
 @ProtoMessage
 public class TaskSummary {
 
-    /**
-     * The time should be stored as GMT
-     */
+    /** The time should be stored as GMT */
     private static final TimeZone GMT = TimeZone.getTimeZone("GMT");
 
     @ProtoField(id = 1)
@@ -89,8 +88,10 @@ public class TaskSummary {
     @ProtoField(id = 19)
     private int workflowPriority;
 
-    public TaskSummary() {
-    }
+    @ProtoField(id = 20)
+    private String domain;
+
+    public TaskSummary() {}
 
     public TaskSummary(Task task) {
 
@@ -111,12 +112,13 @@ public class TaskSummary {
         this.status = task.getStatus();
         this.reasonForIncompletion = task.getReasonForIncompletion();
         this.queueWaitTime = task.getQueueWaitTime();
+        this.domain = task.getDomain();
         if (task.getInputData() != null) {
             this.input = SummaryUtil.serializeInputOutput(task.getInputData());
         }
 
         if (task.getOutputData() != null) {
-           this.output = SummaryUtil.serializeInputOutput(task.getOutputData());
+            this.output = SummaryUtil.serializeInputOutput(task.getOutputData());
         }
 
         if (task.getEndTime() > 0) {
@@ -363,7 +365,8 @@ public class TaskSummary {
     }
 
     /**
-     * @param externalInputPayloadStoragePath the external storage path where the task input payload is stored
+     * @param externalInputPayloadStoragePath the external storage path where the task input payload
+     *     is stored
      */
     public void setExternalInputPayloadStoragePath(String externalInputPayloadStoragePath) {
         this.externalInputPayloadStoragePath = externalInputPayloadStoragePath;
@@ -377,7 +380,8 @@ public class TaskSummary {
     }
 
     /**
-     * @param externalOutputPayloadStoragePath the external storage path where the task output payload is stored
+     * @param externalOutputPayloadStoragePath the external storage path where the task output
+     *     payload is stored
      */
     public void setExternalOutputPayloadStoragePath(String externalOutputPayloadStoragePath) {
         this.externalOutputPayloadStoragePath = externalOutputPayloadStoragePath;
@@ -397,6 +401,20 @@ public class TaskSummary {
         this.workflowPriority = workflowPriority;
     }
 
+    /**
+     * @return the domain that the task was scheduled in
+     */
+    public String getDomain() {
+        return domain;
+    }
+
+    /**
+     * @param domain The domain that the task was scheduled in
+     */
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -406,28 +424,42 @@ public class TaskSummary {
             return false;
         }
         TaskSummary that = (TaskSummary) o;
-        return getExecutionTime() == that.getExecutionTime() &&
-            getQueueWaitTime() == that.getQueueWaitTime() &&
-            getWorkflowPriority() == that.getWorkflowPriority() &&
-            getWorkflowId().equals(that.getWorkflowId()) &&
-            getWorkflowType().equals(that.getWorkflowType()) &&
-            Objects.equals(getCorrelationId(), that.getCorrelationId()) &&
-            getScheduledTime().equals(that.getScheduledTime()) &&
-            Objects.equals(getStartTime(), that.getStartTime()) &&
-            Objects.equals(getUpdateTime(), that.getUpdateTime()) &&
-            Objects.equals(getEndTime(), that.getEndTime()) &&
-            getStatus() == that.getStatus() &&
-            Objects.equals(getReasonForIncompletion(), that.getReasonForIncompletion()) &&
-            Objects.equals(getTaskDefName(), that.getTaskDefName()) &&
-            getTaskType().equals(that.getTaskType()) &&
-            getTaskId().equals(that.getTaskId());
+        return getExecutionTime() == that.getExecutionTime()
+                && getQueueWaitTime() == that.getQueueWaitTime()
+                && getWorkflowPriority() == that.getWorkflowPriority()
+                && getWorkflowId().equals(that.getWorkflowId())
+                && getWorkflowType().equals(that.getWorkflowType())
+                && Objects.equals(getCorrelationId(), that.getCorrelationId())
+                && getScheduledTime().equals(that.getScheduledTime())
+                && Objects.equals(getStartTime(), that.getStartTime())
+                && Objects.equals(getUpdateTime(), that.getUpdateTime())
+                && Objects.equals(getEndTime(), that.getEndTime())
+                && getStatus() == that.getStatus()
+                && Objects.equals(getReasonForIncompletion(), that.getReasonForIncompletion())
+                && Objects.equals(getTaskDefName(), that.getTaskDefName())
+                && getTaskType().equals(that.getTaskType())
+                && getTaskId().equals(that.getTaskId())
+                && Objects.equals(getDomain(), that.getDomain());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getWorkflowId(), getWorkflowType(), getCorrelationId(), getScheduledTime(), getStartTime(),
-            getUpdateTime(), getEndTime(), getStatus(), getReasonForIncompletion(), getExecutionTime(),
-            getQueueWaitTime(),
-            getTaskDefName(), getTaskType(), getTaskId(), getWorkflowPriority());
+        return Objects.hash(
+                getWorkflowId(),
+                getWorkflowType(),
+                getCorrelationId(),
+                getScheduledTime(),
+                getStartTime(),
+                getUpdateTime(),
+                getEndTime(),
+                getStatus(),
+                getReasonForIncompletion(),
+                getExecutionTime(),
+                getQueueWaitTime(),
+                getTaskDefName(),
+                getTaskType(),
+                getTaskId(),
+                getWorkflowPriority(),
+                getDomain());
     }
 }

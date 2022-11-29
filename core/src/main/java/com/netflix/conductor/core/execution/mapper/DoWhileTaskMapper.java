@@ -1,111 +1,104 @@
 /*
- *  Copyright 2021 Netflix, Inc.
- *  <p>
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  the License. You may obtain a copy of the License at
- *  <p>
- *  http://www.apache.org/licenses/LICENSE-2.0
- *  <p>
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- *  specific language governing permissions and limitations under the License.
+ * Copyright 2022 Netflix, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.netflix.conductor.core.execution.mapper;
 
-import com.netflix.conductor.common.metadata.tasks.Task;
-import com.netflix.conductor.common.metadata.tasks.TaskDef;
-import com.netflix.conductor.common.metadata.tasks.TaskType;
-import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
-import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
-import com.netflix.conductor.common.run.Workflow;
-import com.netflix.conductor.common.utils.TaskUtils;
-import com.netflix.conductor.dao.MetadataDAO;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import com.netflix.conductor.common.metadata.tasks.TaskDef;
+import com.netflix.conductor.common.metadata.tasks.TaskType;
+import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
+import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
+import com.netflix.conductor.core.utils.ParametersUtils;
+import com.netflix.conductor.dao.MetadataDAO;
+import com.netflix.conductor.model.TaskModel;
+import com.netflix.conductor.model.WorkflowModel;
 
 /**
- * An implementation of {@link TaskMapper} to map a {@link WorkflowTask} of type {@link TaskType#DO_WHILE} to a {@link
- * Task} of type {@link TaskType#DO_WHILE}
+ * An implementation of {@link TaskMapper} to map a {@link WorkflowTask} of type {@link
+ * TaskType#DO_WHILE} to a {@link TaskModel} of type {@link TaskType#DO_WHILE}
  */
-@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 @Component
 public class DoWhileTaskMapper implements TaskMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DoWhileTaskMapper.class);
 
     private final MetadataDAO metadataDAO;
+    private final ParametersUtils parametersUtils;
 
     @Autowired
-    public DoWhileTaskMapper(MetadataDAO metadataDAO) {
+    public DoWhileTaskMapper(MetadataDAO metadataDAO, ParametersUtils parametersUtils) {
         this.metadataDAO = metadataDAO;
+        this.parametersUtils = parametersUtils;
     }
 
     @Override
-    public TaskType getTaskType() {
-        return TaskType.DO_WHILE;
+    public String getTaskType() {
+        return TaskType.DO_WHILE.name();
     }
 
     /**
-     * This method maps {@link TaskMapper} to map a {@link WorkflowTask} of type {@link TaskType#DO_WHILE} to a {@link
-     * Task} of type {@link TaskType#DO_WHILE} with a status of {@link Task.Status#IN_PROGRESS}
+     * This method maps {@link TaskMapper} to map a {@link WorkflowTask} of type {@link
+     * TaskType#DO_WHILE} to a {@link TaskModel} of type {@link TaskType#DO_WHILE} with a status of
+     * {@link TaskModel.Status#IN_PROGRESS}
      *
-     * @param taskMapperContext: A wrapper class containing the {@link WorkflowTask}, {@link WorkflowDef}, {@link
-     *                           Workflow} and a string representation of the TaskId
-     * @return: A {@link Task} of type {@link TaskType#DO_WHILE} in a List
+     * @param taskMapperContext: A wrapper class containing the {@link WorkflowTask}, {@link
+     *     WorkflowDef}, {@link WorkflowModel} and a string representation of the TaskId
+     * @return: A {@link TaskModel} of type {@link TaskType#DO_WHILE} in a List
      */
     @Override
-    public List<Task> getMappedTasks(TaskMapperContext taskMapperContext) {
-
+    public List<TaskModel> getMappedTasks(TaskMapperContext taskMapperContext) {
         LOGGER.debug("TaskMapperContext {} in DoWhileTaskMapper", taskMapperContext);
 
-        WorkflowTask taskToSchedule = taskMapperContext.getTaskToSchedule();
-        Workflow workflowInstance = taskMapperContext.getWorkflowInstance();
+        WorkflowTask workflowTask = taskMapperContext.getWorkflowTask();
+        WorkflowModel workflowModel = taskMapperContext.getWorkflowModel();
 
-        Task task = workflowInstance.getTaskByRefName(taskToSchedule.getTaskReferenceName());
+        TaskModel task = workflowModel.getTaskByRefName(workflowTask.getTaskReferenceName());
         if (task != null && task.getStatus().isTerminal()) {
-            //Since loopTask is already completed no need to schedule task again.
-            return Collections.emptyList();
+            // Since loopTask is already completed no need to schedule task again.
+            return List.of();
         }
 
-        String taskId = taskMapperContext.getTaskId();
-        List<Task> tasksToBeScheduled = new ArrayList<>();
-        int retryCount = taskMapperContext.getRetryCount();
-        TaskDef taskDefinition = Optional.ofNullable(taskMapperContext.getTaskDefinition())
-            .orElseGet(() -> Optional.ofNullable(metadataDAO.getTaskDef(taskToSchedule.getName()))
-                .orElseGet(TaskDef::new));
+        TaskDef taskDefinition =
+                Optional.ofNullable(taskMapperContext.getTaskDefinition())
+                        .orElseGet(
+                                () ->
+                                        Optional.ofNullable(
+                                                        metadataDAO.getTaskDef(
+                                                                workflowTask.getName()))
+                                                .orElseGet(TaskDef::new));
 
-        Task loopTask = new Task();
-        loopTask.setTaskType(TaskType.TASK_TYPE_DO_WHILE);
-        loopTask.setTaskDefName(taskToSchedule.getName());
-        loopTask.setReferenceTaskName(taskToSchedule.getTaskReferenceName());
-        loopTask.setWorkflowInstanceId(workflowInstance.getWorkflowId());
-        loopTask.setCorrelationId(workflowInstance.getCorrelationId());
-        loopTask.setWorkflowType(workflowInstance.getWorkflowName());
-        loopTask.setScheduledTime(System.currentTimeMillis());
-        loopTask.setTaskId(taskId);
-        loopTask.setIteration(1);
-        loopTask.setStatus(Task.Status.IN_PROGRESS);
-        loopTask.setWorkflowTask(taskToSchedule);
-        loopTask.setRateLimitPerFrequency(taskDefinition.getRateLimitPerFrequency());
-        loopTask.setRateLimitFrequencyInSeconds(taskDefinition.getRateLimitFrequencyInSeconds());
+        TaskModel doWhileTask = taskMapperContext.createTaskModel();
+        doWhileTask.setTaskType(TaskType.TASK_TYPE_DO_WHILE);
+        doWhileTask.setStatus(TaskModel.Status.IN_PROGRESS);
+        doWhileTask.setStartTime(System.currentTimeMillis());
+        doWhileTask.setRateLimitPerFrequency(taskDefinition.getRateLimitPerFrequency());
+        doWhileTask.setRateLimitFrequencyInSeconds(taskDefinition.getRateLimitFrequencyInSeconds());
+        doWhileTask.setRetryCount(taskMapperContext.getRetryCount());
 
-        tasksToBeScheduled.add(loopTask);
-        List<WorkflowTask> loopOverTasks = taskToSchedule.getLoopOver();
-        List<Task> tasks2 = taskMapperContext.getDeciderService()
-            .getTasksToBeScheduled(workflowInstance, loopOverTasks.get(0), retryCount);
-        tasks2.forEach(t -> {
-            t.setReferenceTaskName(TaskUtils.appendIteration(t.getReferenceTaskName(), loopTask.getIteration()));
-            t.setIteration(loopTask.getIteration());
-        });
-        tasksToBeScheduled.addAll(tasks2);
-
-        return tasksToBeScheduled;
+        Map<String, Object> taskInput =
+                parametersUtils.getTaskInputV2(
+                        workflowTask.getInputParameters(),
+                        workflowModel,
+                        doWhileTask.getTaskId(),
+                        taskDefinition);
+        doWhileTask.setInputData(taskInput);
+        return List.of(doWhileTask);
     }
 }

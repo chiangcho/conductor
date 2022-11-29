@@ -1,23 +1,25 @@
 /*
- *  Copyright 2021 Netflix, Inc.
- *  <p>
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  the License. You may obtain a copy of the License at
- *  <p>
- *  http://www.apache.org/licenses/LICENSE-2.0
- *  <p>
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- *  specific language governing permissions and limitations under the License.
+ * Copyright 2022 Netflix, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.netflix.conductor.test.integration
+
+import org.springframework.beans.factory.annotation.Autowired
 
 import com.netflix.conductor.common.metadata.tasks.Task
 import com.netflix.conductor.common.metadata.tasks.TaskResult
 import com.netflix.conductor.common.run.Workflow
 import com.netflix.conductor.core.execution.tasks.SubWorkflow
 import com.netflix.conductor.test.base.AbstractSpecification
-import org.springframework.beans.factory.annotation.Autowired
+
 import spock.lang.Shared
 
 import static com.netflix.conductor.test.util.WorkflowTestUtil.verifyPolledAndAcknowledgedTask
@@ -60,8 +62,8 @@ class LambdaAndTerminateTaskSpec extends AbstractSpecification {
         workflowInput['a'] = 1
 
         when: "Start the workflow which has the terminate task"
-        def workflowInstanceId = workflowExecutor.startWorkflow(WORKFLOW_WITH_TERMINATE_TASK, 1,
-                '', workflowInput, null, null, null)
+        def workflowInstanceId = startWorkflow(WORKFLOW_WITH_TERMINATE_TASK, 1,
+                '', workflowInput, null)
 
         then: "Ensure that the workflow has started and the first task is in scheduled state and workflow output should be terminate task's output"
         with(workflowExecutionService.getExecutionStatus(workflowInstanceId, true)) {
@@ -85,14 +87,14 @@ class LambdaAndTerminateTaskSpec extends AbstractSpecification {
         workflowInput['a'] = 1
 
         when: "Start the workflow which has the terminate task"
-        def workflowInstanceId = workflowExecutor.startWorkflow(WORKFLOW_WITH_TERMINATE_TASK_FAILED, 1,
-                '', workflowInput, null, null, null)
+        def workflowInstanceId = startWorkflow(WORKFLOW_WITH_TERMINATE_TASK_FAILED, 1,
+                '', workflowInput, null)
 
         then: "Verify that the workflow has failed"
         with(workflowExecutionService.getExecutionStatus(workflowInstanceId, true)) {
             status == Workflow.WorkflowStatus.FAILED
             tasks.size() == 2
-            reasonForIncompletion.contains('Workflow is FAILED by TERMINATE task')
+            reasonForIncompletion == "Early exit in terminate"
             tasks[0].status == Task.Status.COMPLETED
             tasks[0].taskType == 'LAMBDA'
             tasks[0].seq == 1
@@ -116,8 +118,8 @@ class LambdaAndTerminateTaskSpec extends AbstractSpecification {
         workflowInput['a'] = 1
 
         when: "Start the workflow which has the terminate task"
-        def workflowInstanceId = workflowExecutor.startWorkflow(PARENT_WORKFLOW_WITH_TERMINATE_TASK, 1,
-                '', workflowInput, null, null, null)
+        def workflowInstanceId = startWorkflow(PARENT_WORKFLOW_WITH_TERMINATE_TASK, 1,
+                '', workflowInput, null)
 
         then: "verify that the workflow has started and the tasks are as expected"
         with(workflowExecutionService.getExecutionStatus(workflowInstanceId, true)) {
@@ -148,7 +150,7 @@ class LambdaAndTerminateTaskSpec extends AbstractSpecification {
         when: "subworkflow is retrieved"
         def workflow = workflowExecutionService.getExecutionStatus(workflowInstanceId, true)
         def subWorkflowTaskId = workflow.getTaskByRefName("test_terminate_subworkflow").getTaskId()
-        workflowExecutor.executeSystemTask(subWorkflowTask, subWorkflowTaskId, 1)
+        asyncSystemTaskExecutor.execute(subWorkflowTask, subWorkflowTaskId)
         workflow = workflowExecutionService.getExecutionStatus(workflowInstanceId, true)
         def subWorkflowId = workflow.getTaskByRefName("test_terminate_subworkflow").subWorkflowId
 
@@ -214,8 +216,8 @@ class LambdaAndTerminateTaskSpec extends AbstractSpecification {
         workflowInput['case'] = 'two'
 
         when: "The workflow is started"
-        def workflowInstanceId = workflowExecutor.startWorkflow(WORKFLOW_WITH_DECISION_AND_TERMINATE, 1, '',
-                workflowInput, null, null, null)
+        def workflowInstanceId = startWorkflow(WORKFLOW_WITH_DECISION_AND_TERMINATE, 1, '',
+                workflowInput, null)
 
         then: "verify that the workflow is in RUNNING state"
         with(workflowExecutionService.getExecutionStatus(workflowInstanceId, true)) {
@@ -258,8 +260,8 @@ class LambdaAndTerminateTaskSpec extends AbstractSpecification {
         workflowInput['a'] = 1
 
         when: "Start the workflow which has the terminate task"
-        def workflowInstanceId = workflowExecutor.startWorkflow(WORKFLOW_WITH_LAMBDA_TASK, 1,
-                '', workflowInput, null, null, null)
+        def workflowInstanceId = startWorkflow(WORKFLOW_WITH_LAMBDA_TASK, 1,
+                '', workflowInput, null)
 
         then: "verify that the task is completed"
         with(workflowExecutionService.getExecutionStatus(workflowInstanceId, true)) {

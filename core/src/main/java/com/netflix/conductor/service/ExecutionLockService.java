@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,16 +12,20 @@
  */
 package com.netflix.conductor.service;
 
-import com.netflix.conductor.core.config.ConductorProperties;
-import com.netflix.conductor.core.sync.Lock;
-import com.netflix.conductor.metrics.Monitors;
 import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.netflix.conductor.annotations.Trace;
+import com.netflix.conductor.core.config.ConductorProperties;
+import com.netflix.conductor.core.sync.Lock;
+import com.netflix.conductor.metrics.Monitors;
+
 @Service
+@Trace
 public class ExecutionLockService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExecutionLockService.class);
@@ -39,10 +43,10 @@ public class ExecutionLockService {
     }
 
     /**
-     * Tries to acquire lock with reasonable timeToTry duration and lease time. Exits if a lock cannot be acquired.
-     * Considering that the workflow decide can be triggered through multiple entry points, and periodically through the
-     * sweeper service, do not block on acquiring the lock, as the order of execution of decides on a workflow doesn't
-     * matter.
+     * Tries to acquire lock with reasonable timeToTry duration and lease time. Exits if a lock
+     * cannot be acquired. Considering that the workflow decide can be triggered through multiple
+     * entry points, and periodically through the sweeper service, do not block on acquiring the
+     * lock, as the order of execution of decides on a workflow doesn't matter.
      *
      * @param lockId
      * @return
@@ -58,11 +62,17 @@ public class ExecutionLockService {
     public boolean acquireLock(String lockId, long timeToTryMs, long leaseTimeMs) {
         if (properties.isWorkflowExecutionLockEnabled()) {
             if (!lock.acquireLock(lockId, timeToTryMs, leaseTimeMs, TimeUnit.MILLISECONDS)) {
-                LOGGER.debug("Thread {} failed to acquire lock to lockId {}.", Thread.currentThread().getId(), lockId);
+                LOGGER.debug(
+                        "Thread {} failed to acquire lock to lockId {}.",
+                        Thread.currentThread().getId(),
+                        lockId);
                 Monitors.recordAcquireLockUnsuccessful();
                 return false;
             }
-            LOGGER.debug("Thread {} acquired lock to lockId {}.", Thread.currentThread().getId(), lockId);
+            LOGGER.debug(
+                    "Thread {} acquired lock to lockId {}.",
+                    Thread.currentThread().getId(),
+                    lockId);
         }
         return true;
     }
@@ -75,14 +85,20 @@ public class ExecutionLockService {
     public void waitForLock(String lockId) {
         if (properties.isWorkflowExecutionLockEnabled()) {
             lock.acquireLock(lockId);
-            LOGGER.debug("Thread {} acquired lock to lockId {}.", Thread.currentThread().getId(), lockId);
+            LOGGER.debug(
+                    "Thread {} acquired lock to lockId {}.",
+                    Thread.currentThread().getId(),
+                    lockId);
         }
     }
 
     public void releaseLock(String lockId) {
         if (properties.isWorkflowExecutionLockEnabled()) {
             lock.releaseLock(lockId);
-            LOGGER.debug("Thread {} released lock to lockId {}.", Thread.currentThread().getId(), lockId);
+            LOGGER.debug(
+                    "Thread {} released lock to lockId {}.",
+                    Thread.currentThread().getId(),
+                    lockId);
         }
     }
 

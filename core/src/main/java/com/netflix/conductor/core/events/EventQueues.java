@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,21 +12,21 @@
  */
 package com.netflix.conductor.core.events;
 
-import com.netflix.conductor.core.events.queue.ObservableQueue;
-import com.netflix.conductor.core.utils.ParametersUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Holders for internal event queues
- */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
+
+import com.netflix.conductor.core.events.queue.ObservableQueue;
+import com.netflix.conductor.core.utils.ParametersUtils;
+
+/** Holders for internal event queues */
 @Component
 public class EventQueues {
 
@@ -38,23 +38,24 @@ public class EventQueues {
     private final Map<String, EventQueueProvider> providers;
 
     @Autowired
-    public EventQueues(@Qualifier(EVENT_QUEUE_PROVIDERS_QUALIFIER) Map<String, EventQueueProvider> providers,
-        ParametersUtils parametersUtils) {
+    public EventQueues(
+            @Qualifier(EVENT_QUEUE_PROVIDERS_QUALIFIER) Map<String, EventQueueProvider> providers,
+            ParametersUtils parametersUtils) {
         this.providers = providers;
         this.parametersUtils = parametersUtils;
     }
 
     public List<String> getProviders() {
         return providers.values().stream()
-            .map(p -> p.getClass().getName())
-            .collect(Collectors.toList());
+                .map(p -> p.getClass().getName())
+                .collect(Collectors.toList());
     }
 
+    @NonNull
     public ObservableQueue getQueue(String eventType) {
         String event = parametersUtils.replace(eventType).toString();
         int index = event.indexOf(':');
         if (index == -1) {
-            LOGGER.error("Queue cannot be configured for illegal event: {}", event);
             throw new IllegalArgumentException("Illegal event " + event);
         }
 
@@ -64,7 +65,6 @@ public class EventQueues {
         if (provider != null) {
             return provider.getQueue(queueURI);
         } else {
-            LOGGER.error("Queue {} is not configured for event:{}", type, eventType);
             throw new IllegalArgumentException("Unknown queue type " + type);
         }
     }

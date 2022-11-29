@@ -12,14 +12,12 @@
  */
 package com.netflix.conductor.common.metadata.tasks;
 
-import com.github.vmg.protogen.annotations.ProtoField;
-import com.github.vmg.protogen.annotations.ProtoMessage;
-
 import java.util.Objects;
 
-/**
- * Model that represents the task's execution log.
- */
+import com.netflix.conductor.annotations.protogen.ProtoField;
+import com.netflix.conductor.annotations.protogen.ProtoMessage;
+
+/** Model that represents the task's execution log. */
 @ProtoMessage
 public class TaskExecLog {
 
@@ -32,8 +30,7 @@ public class TaskExecLog {
     @ProtoField(id = 3)
     private long createdTime;
 
-    public TaskExecLog() {
-    }
+    public TaskExecLog() {}
 
     public TaskExecLog(String log) {
         this.log = log;
@@ -91,9 +88,9 @@ public class TaskExecLog {
             return false;
         }
         TaskExecLog that = (TaskExecLog) o;
-        return createdTime == that.createdTime &&
-            Objects.equals(log, that.log) &&
-            Objects.equals(taskId, that.taskId);
+        return createdTime == that.createdTime
+                && Objects.equals(log, that.log)
+                && Objects.equals(taskId, that.taskId);
     }
 
     @Override

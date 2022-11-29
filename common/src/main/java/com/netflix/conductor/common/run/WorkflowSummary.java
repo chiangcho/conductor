@@ -12,27 +12,26 @@
  */
 package com.netflix.conductor.common.run;
 
-import com.github.vmg.protogen.annotations.ProtoField;
-import com.github.vmg.protogen.annotations.ProtoMessage;
-import com.netflix.conductor.common.run.Workflow.WorkflowStatus;
-import com.netflix.conductor.common.utils.SummaryUtil;
-import org.apache.commons.lang3.StringUtils;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
-/**
- * Captures workflow summary info to be indexed in Elastic Search.
- */
+import org.apache.commons.lang3.StringUtils;
+
+import com.netflix.conductor.annotations.protogen.ProtoField;
+import com.netflix.conductor.annotations.protogen.ProtoMessage;
+import com.netflix.conductor.common.run.Workflow.WorkflowStatus;
+import com.netflix.conductor.common.utils.SummaryUtil;
+
+/** Captures workflow summary info to be indexed in Elastic Search. */
 @ProtoMessage
 public class WorkflowSummary {
 
-    /**
-     * The time should be stored as GMT
-     */
+    /** The time should be stored as GMT */
     private static final TimeZone GMT = TimeZone.getTimeZone("GMT");
 
     @ProtoField(id = 1)
@@ -86,9 +85,10 @@ public class WorkflowSummary {
     @ProtoField(id = 17)
     private int priority;
 
-    public WorkflowSummary() {
+    @ProtoField(id = 18)
+    private Set<String> failedTaskNames = new HashSet<>();
 
-    }
+    public WorkflowSummary() {}
 
     public WorkflowSummary(Workflow workflow) {
 
@@ -121,8 +121,9 @@ public class WorkflowSummary {
             this.executionTime = workflow.getEndTime() - workflow.getStartTime();
         }
         this.event = workflow.getEvent();
-        this.failedReferenceTaskNames = workflow.getFailedReferenceTaskNames().stream()
-            .collect(Collectors.joining(","));
+        this.failedReferenceTaskNames =
+                workflow.getFailedReferenceTaskNames().stream().collect(Collectors.joining(","));
+        this.failedTaskNames = workflow.getFailedTaskNames();
         if (StringUtils.isNotBlank(workflow.getExternalInputPayloadStoragePath())) {
             this.externalInputPayloadStoragePath = workflow.getExternalInputPayloadStoragePath();
         }
@@ -245,6 +246,14 @@ public class WorkflowSummary {
         this.failedReferenceTaskNames = failedReferenceTaskNames;
     }
 
+    public Set<String> getFailedTaskNames() {
+        return failedTaskNames;
+    }
+
+    public void setFailedTaskNames(Set<String> failedTaskNames) {
+        this.failedTaskNames = failedTaskNames;
+    }
+
     public void setWorkflowType(String workflowType) {
         this.workflowType = workflowType;
     }
@@ -301,7 +310,8 @@ public class WorkflowSummary {
     }
 
     /**
-     * @param externalInputPayloadStoragePath the external storage path where the workflow input payload is stored
+     * @param externalInputPayloadStoragePath the external storage path where the workflow input
+     *     payload is stored
      */
     public void setExternalInputPayloadStoragePath(String externalInputPayloadStoragePath) {
         this.externalInputPayloadStoragePath = externalInputPayloadStoragePath;
@@ -315,7 +325,8 @@ public class WorkflowSummary {
     }
 
     /**
-     * @param externalOutputPayloadStoragePath the external storage path where the workflow output payload is stored
+     * @param externalOutputPayloadStoragePath the external storage path where the workflow output
+     *     payload is stored
      */
     public void setExternalOutputPayloadStoragePath(String externalOutputPayloadStoragePath) {
         this.externalOutputPayloadStoragePath = externalOutputPayloadStoragePath;
@@ -344,24 +355,34 @@ public class WorkflowSummary {
             return false;
         }
         WorkflowSummary that = (WorkflowSummary) o;
-        return getVersion() == that.getVersion() &&
-            getExecutionTime() == that.getExecutionTime() &&
-            getPriority() == that.getPriority() &&
-            getWorkflowType().equals(that.getWorkflowType()) &&
-            getWorkflowId().equals(that.getWorkflowId()) &&
-            Objects.equals(getCorrelationId(), that.getCorrelationId()) &&
-            getStartTime().equals(that.getStartTime()) &&
-            getUpdateTime().equals(that.getUpdateTime()) &&
-            getEndTime().equals(that.getEndTime()) &&
-            getStatus() == that.getStatus() &&
-            Objects.equals(getReasonForIncompletion(), that.getReasonForIncompletion()) &&
-            Objects.equals(getEvent(), that.getEvent());
+        return getVersion() == that.getVersion()
+                && getExecutionTime() == that.getExecutionTime()
+                && getPriority() == that.getPriority()
+                && getWorkflowType().equals(that.getWorkflowType())
+                && getWorkflowId().equals(that.getWorkflowId())
+                && Objects.equals(getCorrelationId(), that.getCorrelationId())
+                && StringUtils.equals(getStartTime(), that.getStartTime())
+                && StringUtils.equals(getUpdateTime(), that.getUpdateTime())
+                && StringUtils.equals(getEndTime(), that.getEndTime())
+                && getStatus() == that.getStatus()
+                && Objects.equals(getReasonForIncompletion(), that.getReasonForIncompletion())
+                && Objects.equals(getEvent(), that.getEvent());
     }
 
     @Override
     public int hashCode() {
-        return Objects
-            .hash(getWorkflowType(), getVersion(), getWorkflowId(), getCorrelationId(), getStartTime(), getUpdateTime(),
-                getEndTime(), getStatus(), getReasonForIncompletion(), getExecutionTime(), getEvent(), getPriority());
+        return Objects.hash(
+                getWorkflowType(),
+                getVersion(),
+                getWorkflowId(),
+                getCorrelationId(),
+                getStartTime(),
+                getUpdateTime(),
+                getEndTime(),
+                getStatus(),
+                getReasonForIncompletion(),
+                getExecutionTime(),
+                getEvent(),
+                getPriority());
     }
 }

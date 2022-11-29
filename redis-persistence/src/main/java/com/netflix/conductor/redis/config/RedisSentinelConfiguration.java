@@ -12,21 +12,24 @@
  */
 package com.netflix.conductor.redis.config;
 
-import com.netflix.conductor.core.config.ConductorProperties;
-import com.netflix.conductor.redis.jedis.JedisSentinel;
-import com.netflix.dyno.connectionpool.Host;
-import com.netflix.dyno.connectionpool.HostSupplier;
-import com.netflix.dyno.connectionpool.TokenMapSupplier;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
+
+import com.netflix.conductor.core.config.ConductorProperties;
+import com.netflix.conductor.redis.jedis.JedisSentinel;
+import com.netflix.dyno.connectionpool.Host;
+import com.netflix.dyno.connectionpool.HostSupplier;
+import com.netflix.dyno.connectionpool.TokenMapSupplier;
+
 import redis.clients.jedis.JedisSentinelPool;
+import redis.clients.jedis.Protocol;
 import redis.clients.jedis.commands.JedisCommands;
 
 @Configuration(proxyBeanMethods = false)
@@ -36,21 +39,53 @@ public class RedisSentinelConfiguration extends JedisCommandsConfigurer {
     private static final Logger log = LoggerFactory.getLogger(RedisSentinelConfiguration.class);
 
     @Override
-    protected JedisCommands createJedisCommands(RedisProperties properties, ConductorProperties conductorProperties,
-        HostSupplier hostSupplier, TokenMapSupplier tokenMapSupplier) {
-        GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
-        genericObjectPoolConfig.setMinIdle(5);
+    protected JedisCommands createJedisCommands(
+            RedisProperties properties,
+            ConductorProperties conductorProperties,
+            HostSupplier hostSupplier,
+            TokenMapSupplier tokenMapSupplier) {
+        GenericObjectPoolConfig<?> genericObjectPoolConfig = new GenericObjectPoolConfig<>();
+        genericObjectPoolConfig.setMinIdle(properties.getMinIdleConnections());
+        genericObjectPoolConfig.setMaxIdle(properties.getMaxIdleConnections());
         genericObjectPoolConfig.setMaxTotal(properties.getMaxConnectionsPerHost());
-        log.info("Starting conductor server using redis_sentinel and cluster " + properties.getClusterName());
+        genericObjectPoolConfig.setTestWhileIdle(properties.isTestWhileIdle());
+        genericObjectPoolConfig.setMinEvictableIdleTimeMillis(
+                properties.getMinEvictableIdleTimeMillis());
+        genericObjectPoolConfig.setTimeBetweenEvictionRunsMillis(
+                properties.getTimeBetweenEvictionRunsMillis());
+        genericObjectPoolConfig.setNumTestsPerEvictionRun(properties.getNumTestsPerEvictionRun());
+        log.info(
+                "Starting conductor server using redis_sentinel and cluster "
+                        + properties.getClusterName());
         Set<String> sentinels = new HashSet<>();
-        String password = null;
         for (Host host : hostSupplier.getHosts()) {
             sentinels.add(host.getHostName() + ":" + host.getPort());
-            if(StringUtils.isNotBlank(host.getPassword())) {
-                password = host.getPassword();
-            }
         }
-        return new JedisSentinel(
-            new JedisSentinelPool(properties.getClusterName(), sentinels, genericObjectPoolConfig, password));
+        // We use the password of the first sentinel host as password and sentinelPassword
+        String password = getPassword(hostSupplier.getHosts());
+        if (password != null) {
+            return new JedisSentinel(
+                    new JedisSentinelPool(
+                            properties.getClusterName(),
+                            sentinels,
+                            genericObjectPoolConfig,
+                            Protocol.DEFAULT_TIMEOUT,
+                            Protocol.DEFAULT_TIMEOUT,
+                            password,
+                            Protocol.DEFAULT_DATABASE,
+                            null,
+                            Protocol.DEFAULT_TIMEOUT,
+                            Protocol.DEFAULT_TIMEOUT,
+                            password,
+                            null));
+        } else {
+            return new JedisSentinel(
+                    new JedisSentinelPool(
+                            properties.getClusterName(), sentinels, genericObjectPoolConfig));
+        }
+    }
+
+    private String getPassword(List<Host> hosts) {
+        return hosts.isEmpty() ? null : hosts.get(0).getPassword();
     }
 }

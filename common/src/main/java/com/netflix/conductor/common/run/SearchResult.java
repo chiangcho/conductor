@@ -20,8 +20,7 @@ public class SearchResult<T> {
 
     private List<T> results;
 
-    public SearchResult() {
-    }
+    public SearchResult() {}
 
     public SearchResult(long totalHits, List<T> results) {
         super();

@@ -12,7 +12,6 @@
  */
 
 plugins {
-    id 'application'
     id 'org.springframework.boot'
 }
 
@@ -20,19 +19,24 @@ dependencies {
 
     implementation project(':conductor-rest')
     implementation project(':conductor-core')
-    implementation project(':conductor-contribs')
     implementation project(':conductor-redis-persistence')
     implementation project(':conductor-cassandra-persistence')
-    implementation project(':conductor-postgres-persistence')
-    implementation project(':conductor-mysql-persistence')
     implementation project(':conductor-es6-persistence')
     implementation project(':conductor-grpc-server')
+    implementation project(':conductor-redis-lock')
+    implementation project(':conductor-redis-concurrency-limit')
+    implementation project(':conductor-http-task')
+    implementation project(':conductor-json-jq-task')
+    implementation project(':conductor-awss3-storage')
+    implementation project(':conductor-awssqs-event-queue')
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery:2.2.5.RELEASE'
     implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config:2.2.5.RELEASE'
+    implementation 'org.springframework.retry:spring-retry'
+
     implementation 'org.springframework.boot:spring-boot-starter-log4j2'
     implementation 'org.apache.logging.log4j:log4j-web'
 
@@ -40,7 +44,7 @@ dependencies {
 
     implementation "org.springdoc:springdoc-openapi-ui:${revOpenapi}"
 
-    runtimeOnly 'com.netflix.spectator:spectator-reg-micrometer'
+    runtimeOnly "org.glassfish.jaxb:jaxb-runtime:${revJAXB}"
 
     testImplementation project(':conductor-rest')
     testImplementation project(':conductor-common')
@@ -55,7 +59,7 @@ jar {
 }
 
 bootJar {
-    mainClassName = 'com.netflix.conductor.Conductor'
+    mainClass = 'com.netflix.conductor.Conductor'
     classifier = 'boot'
 }
 

@@ -12,6 +12,8 @@
  */
 package com.netflix.conductor.core.events;
 
+import org.springframework.lang.NonNull;
+
 import com.netflix.conductor.core.events.queue.ObservableQueue;
 
 public class MockQueueProvider implements EventQueueProvider {
@@ -28,6 +30,7 @@ public class MockQueueProvider implements EventQueueProvider {
     }
 
     @Override
+    @NonNull
     public ObservableQueue getQueue(String queueURI) {
         return new MockObservableQueue(queueURI, queueURI, type);
     }

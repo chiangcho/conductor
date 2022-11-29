@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,27 +12,25 @@
  */
 package com.netflix.conductor.dao;
 
-import com.netflix.conductor.common.metadata.tasks.TaskDef;
-import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
-
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Data access layer for the workflow metadata - task definitions and workflow definitions
- */
+import com.netflix.conductor.common.metadata.tasks.TaskDef;
+import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
+
+/** Data access layer for the workflow metadata - task definitions and workflow definitions */
 public interface MetadataDAO {
 
     /**
      * @param taskDef task definition to be created
      */
-    void createTaskDef(TaskDef taskDef);
+    TaskDef createTaskDef(TaskDef taskDef);
 
     /**
      * @param taskDef task definition to be updated.
      * @return name of the task definition
      */
-    String updateTaskDef(TaskDef taskDef);
+    TaskDef updateTaskDef(TaskDef taskDef);
 
     /**
      * @param name Name of the task
@@ -67,14 +65,14 @@ public interface MetadataDAO {
     Optional<WorkflowDef> getLatestWorkflowDef(String name);
 
     /**
-     * @param name    Name of the workflow
+     * @param name Name of the workflow
      * @param version version
      * @return workflow definition
      */
     Optional<WorkflowDef> getWorkflowDef(String name, int version);
 
     /**
-     * @param name    Name of the workflow definition to be removed
+     * @param name Name of the workflow definition to be removed
      * @param version Version of the workflow definition to be removed
      */
     void removeWorkflowDef(String name, Integer version);

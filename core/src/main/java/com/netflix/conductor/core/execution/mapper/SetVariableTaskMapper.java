@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,18 +12,15 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
-import com.netflix.conductor.common.metadata.tasks.Task;
-import com.netflix.conductor.common.metadata.tasks.TaskType;
-import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
-import com.netflix.conductor.common.run.Workflow;
-import com.netflix.conductor.core.exception.TerminateWorkflowException;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import com.netflix.conductor.common.metadata.tasks.TaskType;
+import com.netflix.conductor.core.exception.TerminateWorkflowException;
+import com.netflix.conductor.model.TaskModel;
 
 @Component
 public class SetVariableTaskMapper implements TaskMapper {
@@ -31,34 +28,20 @@ public class SetVariableTaskMapper implements TaskMapper {
     public static final Logger LOGGER = LoggerFactory.getLogger(SetVariableTaskMapper.class);
 
     @Override
-    public TaskType getTaskType() {
-        return TaskType.SET_VARIABLE;
+    public String getTaskType() {
+        return TaskType.SET_VARIABLE.name();
     }
 
     @Override
-    public List<Task> getMappedTasks(TaskMapperContext taskMapperContext) throws TerminateWorkflowException {
+    public List<TaskModel> getMappedTasks(TaskMapperContext taskMapperContext)
+            throws TerminateWorkflowException {
         LOGGER.debug("TaskMapperContext {} in SetVariableMapper", taskMapperContext);
 
-        WorkflowTask taskToSchedule = taskMapperContext.getTaskToSchedule();
-        Workflow workflowInstance = taskMapperContext.getWorkflowInstance();
-        Map<String, Object> taskInput = taskMapperContext.getTaskInput();
-        String taskId = taskMapperContext.getTaskId();
-
-        Task varTask = new Task();
-        varTask.setTaskType(taskToSchedule.getType());
-        varTask.setTaskDefName(taskToSchedule.getName());
-        varTask.setReferenceTaskName(taskToSchedule.getTaskReferenceName());
-        varTask.setWorkflowInstanceId(workflowInstance.getWorkflowId());
-        varTask.setWorkflowType(workflowInstance.getWorkflowName());
-        varTask.setCorrelationId(workflowInstance.getCorrelationId());
+        TaskModel varTask = taskMapperContext.createTaskModel();
         varTask.setStartTime(System.currentTimeMillis());
-        varTask.setScheduledTime(System.currentTimeMillis());
-        varTask.setInputData(taskInput);
-        varTask.setTaskId(taskId);
-        varTask.setStatus(Task.Status.IN_PROGRESS);
-        varTask.setWorkflowTask(taskToSchedule);
-        varTask.setWorkflowPriority(workflowInstance.getPriority());
+        varTask.setInputData(taskMapperContext.getTaskInput());
+        varTask.setStatus(TaskModel.Status.IN_PROGRESS);
 
-        return Collections.singletonList(varTask);
+        return List.of(varTask);
     }
 }

@@ -12,29 +12,16 @@
  */
 package com.netflix.conductor.service;
 
-import static com.netflix.conductor.TestUtils.getConstraintViolationMessages;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.netflix.conductor.common.metadata.events.EventHandler;
-import com.netflix.conductor.common.metadata.tasks.TaskDef;
-import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
-import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
-import com.netflix.conductor.core.config.ConductorProperties;
-import com.netflix.conductor.core.exception.ApplicationException;
-import com.netflix.conductor.dao.EventHandlerDAO;
-import com.netflix.conductor.dao.MetadataDAO;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
 import javax.validation.ConstraintViolationException;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +29,28 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.netflix.conductor.common.metadata.events.EventHandler;
+import com.netflix.conductor.common.metadata.tasks.TaskDef;
+import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
+import com.netflix.conductor.common.metadata.workflow.WorkflowDefSummary;
+import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
+import com.netflix.conductor.core.config.ConductorProperties;
+import com.netflix.conductor.core.exception.NotFoundException;
+import com.netflix.conductor.dao.EventHandlerDAO;
+import com.netflix.conductor.dao.MetadataDAO;
+
+import static com.netflix.conductor.TestUtils.getConstraintViolationMessages;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings("SpringJavaAutowiredMembersInspection")
 @RunWith(SpringRunner.class)
@@ -64,17 +73,32 @@ public class MetadataServiceTest {
         }
 
         @Bean
-        public MetadataService metadataService(MetadataDAO metadataDAO, ConductorProperties properties) {
+        public MetadataService metadataService(
+                MetadataDAO metadataDAO, ConductorProperties properties) {
             EventHandlerDAO eventHandlerDAO = mock(EventHandlerDAO.class);
+
+            when(metadataDAO.getAllWorkflowDefs()).thenReturn(mockWorkflowDefs());
+
             return new MetadataServiceImpl(metadataDAO, eventHandlerDAO, properties);
+        }
+
+        private List<WorkflowDef> mockWorkflowDefs() {
+            // Returns list of workflowDefs in reverse version order.
+            List<WorkflowDef> retval = new ArrayList<>();
+            for (int i = 5; i > 0; i--) {
+                WorkflowDef def = new WorkflowDef();
+                def.setCreateTime(new Date().getTime());
+                def.setVersion(i);
+                def.setName("test_workflow_def");
+                retval.add(def);
+            }
+            return retval;
         }
     }
 
-    @Autowired
-    private MetadataDAO metadataDAO;
+    @Autowired private MetadataDAO metadataDAO;
 
-    @Autowired
-    private MetadataService metadataService;
+    @Autowired private MetadataService metadataService;
 
     @Test(expected = ConstraintViolationException.class)
     public void testRegisterTaskDefNoName() {
@@ -115,7 +139,9 @@ public class MetadataServiceTest {
         } catch (ConstraintViolationException ex) {
             assertEquals(1, ex.getConstraintViolations().size());
             Set<String> messages = getConstraintViolationMessages(ex.getConstraintViolations());
-            assertTrue(messages.contains("TaskDef responseTimeoutSeconds: 0 should be minimum 1 second"));
+            assertTrue(
+                    messages.contains(
+                            "TaskDef responseTimeoutSeconds: 0 should be minimum 1 second"));
             throw ex;
         }
         fail("metadataService.registerTaskDef did not throw ConstraintViolationException !");
@@ -149,7 +175,7 @@ public class MetadataServiceTest {
         fail("metadataService.updateTaskDef did not throw ConstraintViolationException !");
     }
 
-    @Test(expected = ApplicationException.class)
+    @Test(expected = NotFoundException.class)
     public void testUpdateTaskDefNotExisting() {
         TaskDef taskDef = new TaskDef();
         taskDef.setName("test");
@@ -158,7 +184,7 @@ public class MetadataServiceTest {
         metadataService.updateTaskDef(taskDef);
     }
 
-    @Test(expected = ApplicationException.class)
+    @Test(expected = NotFoundException.class)
     public void testUpdateTaskDefDaoException() {
         TaskDef taskDef = new TaskDef();
         taskDef.setName("test");
@@ -273,6 +299,22 @@ public class MetadataServiceTest {
     }
 
     @Test(expected = ConstraintViolationException.class)
+    public void testValidateWorkflowDefNoName() {
+        try {
+            WorkflowDef workflowDef = new WorkflowDef();
+            metadataService.validateWorkflowDef(workflowDef);
+        } catch (ConstraintViolationException ex) {
+            assertEquals(3, ex.getConstraintViolations().size());
+            Set<String> messages = getConstraintViolationMessages(ex.getConstraintViolations());
+            assertTrue(messages.contains("WorkflowDef name cannot be null or empty"));
+            assertTrue(messages.contains("WorkflowTask list cannot be empty"));
+            assertTrue(messages.contains("ownerEmail cannot be empty"));
+            throw ex;
+        }
+        fail("metadataService.validateWorkflowDef did not throw ConstraintViolationException !");
+    }
+
+    @Test(expected = ConstraintViolationException.class)
     public void testRegisterWorkflowDefInvalidName() {
         try {
             WorkflowDef workflowDef = new WorkflowDef();
@@ -283,11 +325,33 @@ public class MetadataServiceTest {
             assertEquals(3, ex.getConstraintViolations().size());
             Set<String> messages = getConstraintViolationMessages(ex.getConstraintViolations());
             assertTrue(messages.contains("WorkflowTask list cannot be empty"));
-            assertTrue(messages.contains("Workflow name cannot contain the following set of characters: ':'"));
+            assertTrue(
+                    messages.contains(
+                            "Workflow name cannot contain the following set of characters: ':'"));
             assertTrue(messages.contains("ownerEmail should be valid email address"));
             throw ex;
         }
         fail("metadataService.registerWorkflowDef did not throw ConstraintViolationException !");
+    }
+
+    @Test(expected = ConstraintViolationException.class)
+    public void testValidateWorkflowDefInvalidName() {
+        try {
+            WorkflowDef workflowDef = new WorkflowDef();
+            workflowDef.setName("invalid:name");
+            workflowDef.setOwnerEmail("inavlid-email");
+            metadataService.validateWorkflowDef(workflowDef);
+        } catch (ConstraintViolationException ex) {
+            assertEquals(3, ex.getConstraintViolations().size());
+            Set<String> messages = getConstraintViolationMessages(ex.getConstraintViolations());
+            assertTrue(messages.contains("WorkflowTask list cannot be empty"));
+            assertTrue(
+                    messages.contains(
+                            "Workflow name cannot contain the following set of characters: ':'"));
+            assertTrue(messages.contains("ownerEmail should be valid email address"));
+            throw ex;
+        }
+        fail("metadataService.validateWorkflowDef did not throw ConstraintViolationException !");
     }
 
     @Test
@@ -304,6 +368,24 @@ public class MetadataServiceTest {
         workflowDef.setTasks(tasks);
         when(metadataDAO.getTaskDef(any())).thenReturn(new TaskDef());
         metadataService.registerWorkflowDef(workflowDef);
+        verify(metadataDAO, times(1)).createWorkflowDef(workflowDef);
+        assertEquals(2, workflowDef.getSchemaVersion());
+    }
+
+    @Test
+    public void testValidateWorkflowDef() {
+        WorkflowDef workflowDef = new WorkflowDef();
+        workflowDef.setName("somename");
+        workflowDef.setSchemaVersion(2);
+        workflowDef.setOwnerEmail("sample@test.com");
+        List<WorkflowTask> tasks = new ArrayList<>();
+        WorkflowTask workflowTask = new WorkflowTask();
+        workflowTask.setTaskReferenceName("hello");
+        workflowTask.setName("hello");
+        tasks.add(workflowTask);
+        workflowDef.setTasks(tasks);
+        when(metadataDAO.getTaskDef(any())).thenReturn(new TaskDef());
+        metadataService.validateWorkflowDef(workflowDef);
         verify(metadataDAO, times(1)).createWorkflowDef(workflowDef);
         assertEquals(2, workflowDef.getSchemaVersion());
     }
@@ -351,9 +433,26 @@ public class MetadataServiceTest {
             Set<String> messages = getConstraintViolationMessages(ex.getConstraintViolations());
             assertTrue(messages.contains("Missing event handler name"));
             assertTrue(messages.contains("Missing event location"));
-            assertTrue(messages.contains("No actions specified. Please specify at-least one action"));
+            assertTrue(
+                    messages.contains("No actions specified. Please specify at-least one action"));
             throw ex;
         }
         fail("metadataService.addEventHandler did not throw ConstraintViolationException !");
+    }
+
+    @Test
+    public void testWorkflowNamesAndVersions() {
+        Map<String, ? extends Iterable<WorkflowDefSummary>> namesAndVersions =
+                metadataService.getWorkflowNamesAndVersions();
+
+        Iterator<WorkflowDefSummary> versions =
+                namesAndVersions.get("test_workflow_def").iterator();
+
+        for (int i = 1; i <= 5; i++) {
+            WorkflowDefSummary ver = versions.next();
+            assertEquals(i, ver.getVersion());
+            assertNotNull(ver.getCreateTime());
+            assertEquals("test_workflow_def", ver.getName());
+        }
     }
 }

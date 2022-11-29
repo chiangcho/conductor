@@ -12,16 +12,17 @@
  */
 package com.netflix.conductor.common.metadata.workflow;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.github.vmg.protogen.annotations.ProtoField;
-import com.github.vmg.protogen.annotations.ProtoMessage;
-import com.google.common.base.Preconditions;
+import java.util.Map;
+import java.util.Objects;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import java.util.Map;
-import java.util.Objects;
+
+import com.netflix.conductor.annotations.protogen.ProtoField;
+import com.netflix.conductor.annotations.protogen.ProtoMessage;
+
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 @ProtoMessage
 public class SubWorkflowParams {
@@ -37,7 +38,8 @@ public class SubWorkflowParams {
     @ProtoField(id = 3)
     private Map<String, String> taskToDomain;
 
-    // workaround as WorkflowDef cannot directly be used due to cyclic dependency issue in protobuf imports
+    // workaround as WorkflowDef cannot directly be used due to cyclic dependency issue in protobuf
+    // imports
     @ProtoField(id = 4)
     private Object workflowDefinition;
 
@@ -110,7 +112,10 @@ public class SubWorkflowParams {
      * @param workflowDef the workflowDefinition to set
      */
     public void setWorkflowDefinition(Object workflowDef) {
-        Preconditions.checkArgument(workflowDef == null || workflowDef instanceof WorkflowDef,"workflowDefinition must be either null or WorkflowDef");
+        if (!(workflowDef == null || workflowDef instanceof WorkflowDef)) {
+            throw new IllegalArgumentException(
+                    "workflowDefinition must be either null or WorkflowDef");
+        }
         this.workflowDefinition = workflowDef;
     }
 
@@ -131,9 +136,9 @@ public class SubWorkflowParams {
             return false;
         }
         SubWorkflowParams that = (SubWorkflowParams) o;
-        return Objects.equals(getName(), that.getName()) &&
-            Objects.equals(getVersion(), that.getVersion()) &&
-            Objects.equals(getTaskToDomain(), that.getTaskToDomain()) &&
-            Objects.equals(getWorkflowDefinition(), that.getWorkflowDefinition());
+        return Objects.equals(getName(), that.getName())
+                && Objects.equals(getVersion(), that.getVersion())
+                && Objects.equals(getTaskToDomain(), that.getTaskToDomain())
+                && Objects.equals(getWorkflowDefinition(), that.getWorkflowDefinition());
     }
 }

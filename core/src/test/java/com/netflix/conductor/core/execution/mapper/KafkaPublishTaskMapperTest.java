@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,83 +12,85 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
-import com.netflix.conductor.common.metadata.tasks.Task;
-import com.netflix.conductor.common.metadata.tasks.TaskDef;
-import com.netflix.conductor.common.metadata.tasks.TaskType;
-import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
-import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
-import com.netflix.conductor.common.run.Workflow;
-import com.netflix.conductor.core.utils.IDGenerator;
-import com.netflix.conductor.core.utils.ParametersUtils;
-import com.netflix.conductor.dao.MetadataDAO;
+import java.util.HashMap;
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.util.HashMap;
-import java.util.List;
+import com.netflix.conductor.common.metadata.tasks.TaskDef;
+import com.netflix.conductor.common.metadata.tasks.TaskType;
+import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
+import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
+import com.netflix.conductor.core.utils.IDGenerator;
+import com.netflix.conductor.core.utils.ParametersUtils;
+import com.netflix.conductor.dao.MetadataDAO;
+import com.netflix.conductor.model.TaskModel;
+import com.netflix.conductor.model.WorkflowModel;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
 public class KafkaPublishTaskMapperTest {
 
+    private IDGenerator idGenerator;
     private KafkaPublishTaskMapper kafkaTaskMapper;
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
+    @Rule public ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setUp() {
         ParametersUtils parametersUtils = mock(ParametersUtils.class);
         MetadataDAO metadataDAO = mock(MetadataDAO.class);
         kafkaTaskMapper = new KafkaPublishTaskMapper(parametersUtils, metadataDAO);
+        idGenerator = new IDGenerator();
     }
 
     @Test
     public void getMappedTasks() {
-        //Given
-        WorkflowTask taskToSchedule = new WorkflowTask();
-        taskToSchedule.setName("kafka_task");
-        taskToSchedule.setType(TaskType.KAFKA_PUBLISH.name());
-        taskToSchedule.setTaskDefinition(new TaskDef("kafka_task"));
-        String taskId = IDGenerator.generate();
-        String retriedTaskId = IDGenerator.generate();
+        // Given
+        WorkflowTask workflowTask = new WorkflowTask();
+        workflowTask.setName("kafka_task");
+        workflowTask.setType(TaskType.KAFKA_PUBLISH.name());
+        workflowTask.setTaskDefinition(new TaskDef("kafka_task"));
+        String taskId = idGenerator.generate();
+        String retriedTaskId = idGenerator.generate();
 
-        Workflow workflow = new Workflow();
+        WorkflowModel workflow = new WorkflowModel();
         WorkflowDef workflowDef = new WorkflowDef();
         workflow.setWorkflowDefinition(workflowDef);
 
-        TaskMapperContext taskMapperContext = TaskMapperContext.newBuilder()
-            .withWorkflowDefinition(workflowDef)
-            .withWorkflowInstance(workflow)
-            .withTaskDefinition(new TaskDef())
-            .withTaskToSchedule(taskToSchedule)
-            .withTaskInput(new HashMap<>())
-            .withRetryCount(0)
-            .withRetryTaskId(retriedTaskId)
-            .withTaskId(taskId)
-            .build();
+        TaskMapperContext taskMapperContext =
+                TaskMapperContext.newBuilder()
+                        .withWorkflowModel(workflow)
+                        .withTaskDefinition(new TaskDef())
+                        .withWorkflowTask(workflowTask)
+                        .withTaskInput(new HashMap<>())
+                        .withRetryCount(0)
+                        .withRetryTaskId(retriedTaskId)
+                        .withTaskId(taskId)
+                        .build();
 
-        //when
-        List<Task> mappedTasks = kafkaTaskMapper.getMappedTasks(taskMapperContext);
+        // when
+        List<TaskModel> mappedTasks = kafkaTaskMapper.getMappedTasks(taskMapperContext);
 
-        //Then
+        // Then
         assertEquals(1, mappedTasks.size());
         assertEquals(TaskType.KAFKA_PUBLISH.name(), mappedTasks.get(0).getTaskType());
     }
 
     @Test
     public void getMappedTasks_WithoutTaskDef() {
-        //Given
-        WorkflowTask taskToSchedule = new WorkflowTask();
-        taskToSchedule.setName("kafka_task");
-        taskToSchedule.setType(TaskType.KAFKA_PUBLISH.name());
-        String taskId = IDGenerator.generate();
-        String retriedTaskId = IDGenerator.generate();
+        // Given
+        WorkflowTask workflowTask = new WorkflowTask();
+        workflowTask.setName("kafka_task");
+        workflowTask.setType(TaskType.KAFKA_PUBLISH.name());
+        String taskId = idGenerator.generate();
+        String retriedTaskId = idGenerator.generate();
 
-        Workflow workflow = new Workflow();
+        WorkflowModel workflow = new WorkflowModel();
         WorkflowDef workflowDef = new WorkflowDef();
         workflow.setWorkflowDefinition(workflowDef);
 
@@ -97,21 +99,21 @@ public class KafkaPublishTaskMapperTest {
         taskdefinition.setExecutionNameSpace(testExecutionNameSpace);
         String testIsolationGroupId = "testIsolationGroupId";
         taskdefinition.setIsolationGroupId(testIsolationGroupId);
-        TaskMapperContext taskMapperContext = TaskMapperContext.newBuilder()
-            .withWorkflowDefinition(workflowDef)
-            .withWorkflowInstance(workflow)
-            .withTaskDefinition(taskdefinition)
-            .withTaskToSchedule(taskToSchedule)
-            .withTaskInput(new HashMap<>())
-            .withRetryCount(0)
-            .withRetryTaskId(retriedTaskId)
-            .withTaskId(taskId)
-            .build();
+        TaskMapperContext taskMapperContext =
+                TaskMapperContext.newBuilder()
+                        .withWorkflowModel(workflow)
+                        .withTaskDefinition(taskdefinition)
+                        .withWorkflowTask(workflowTask)
+                        .withTaskInput(new HashMap<>())
+                        .withRetryCount(0)
+                        .withRetryTaskId(retriedTaskId)
+                        .withTaskId(taskId)
+                        .build();
 
-        //when
-        List<Task> mappedTasks = kafkaTaskMapper.getMappedTasks(taskMapperContext);
+        // when
+        List<TaskModel> mappedTasks = kafkaTaskMapper.getMappedTasks(taskMapperContext);
 
-        //Then
+        // Then
         assertEquals(1, mappedTasks.size());
         assertEquals(TaskType.KAFKA_PUBLISH.name(), mappedTasks.get(0).getTaskType());
         assertEquals(testExecutionNameSpace, mappedTasks.get(0).getExecutionNameSpace());

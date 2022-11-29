@@ -21,4 +21,4 @@ cd /app/libs
 
 echo "Using java options config: $JAVA_OPTS"
 
-java ${JAVA_OPTS} -jar conductor-server-*-boot.jar
+java ${JAVA_OPTS} -jar -DCONDUCTOR_CONFIG_FILE=$config_file conductor-server-*-boot.jar 2>&1 | tee -a /app/logs/server.log

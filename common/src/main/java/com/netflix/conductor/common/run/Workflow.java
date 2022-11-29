@@ -1,36 +1,31 @@
 /*
- *  Copyright 2021 Netflix, Inc.
- *  <p>
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  the License. You may obtain a copy of the License at
- *  <p>
- *  http://www.apache.org/licenses/LICENSE-2.0
- *  <p>
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- *  specific language governing permissions and limitations under the License.
+ * Copyright 2022 Netflix, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.netflix.conductor.common.run;
 
-import com.github.vmg.protogen.annotations.ProtoEnum;
-import com.github.vmg.protogen.annotations.ProtoField;
-import com.github.vmg.protogen.annotations.ProtoMessage;
-import com.google.common.base.Preconditions;
-import com.netflix.conductor.common.metadata.Auditable;
-import com.netflix.conductor.common.metadata.tasks.Task;
-import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
-import org.apache.commons.lang3.StringUtils;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.netflix.conductor.annotations.protogen.ProtoEnum;
+import com.netflix.conductor.annotations.protogen.ProtoField;
+import com.netflix.conductor.annotations.protogen.ProtoMessage;
+import com.netflix.conductor.common.metadata.Auditable;
+import com.netflix.conductor.common.metadata.tasks.Task;
+import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
 
 @ProtoMessage
 public class Workflow extends Auditable {
@@ -128,9 +123,10 @@ public class Workflow extends Auditable {
     @ProtoField(id = 24)
     private long lastRetriedTime;
 
-    public Workflow() {
+    @ProtoField(id = 25)
+    private Set<String> failedTaskNames = new HashSet<>();
 
-    }
+    public Workflow() {}
 
     /**
      * @return the status
@@ -213,6 +209,9 @@ public class Workflow extends Auditable {
      * @param input the input to set
      */
     public void setInput(Map<String, Object> input) {
+        if (input == null) {
+            input = new HashMap<>();
+        }
         this.input = input;
     }
 
@@ -241,6 +240,9 @@ public class Workflow extends Auditable {
      * @param output the output to set
      */
     public void setOutput(Map<String, Object> output) {
+        if (output == null) {
+            output = new HashMap<>();
+        }
         this.output = output;
     }
 
@@ -324,6 +326,14 @@ public class Workflow extends Auditable {
         this.failedReferenceTaskNames = failedReferenceTaskNames;
     }
 
+    public Set<String> getFailedTaskNames() {
+        return failedTaskNames;
+    }
+
+    public void setFailedTaskNames(Set<String> failedTaskNames) {
+        this.failedTaskNames = failedTaskNames;
+    }
+
     public WorkflowDef getWorkflowDefinition() {
         return workflowDefinition;
     }
@@ -340,7 +350,8 @@ public class Workflow extends Auditable {
     }
 
     /**
-     * @param externalInputPayloadStoragePath the external storage path where the workflow input payload is stored
+     * @param externalInputPayloadStoragePath the external storage path where the workflow input
+     *     payload is stored
      */
     public void setExternalInputPayloadStoragePath(String externalInputPayloadStoragePath) {
         this.externalInputPayloadStoragePath = externalInputPayloadStoragePath;
@@ -376,7 +387,9 @@ public class Workflow extends Auditable {
      * @return the workflow definition name.
      */
     public String getWorkflowName() {
-        Preconditions.checkNotNull(workflowDefinition, "Workflow definition is null");
+        if (workflowDefinition == null) {
+            throw new NullPointerException("Workflow definition is null");
+        }
         return workflowDefinition.getName();
     }
 
@@ -386,12 +399,15 @@ public class Workflow extends Auditable {
      * @return the workflow definition version.
      */
     public int getWorkflowVersion() {
-        Preconditions.checkNotNull(workflowDefinition, "Workflow definition is null");
+        if (workflowDefinition == null) {
+            throw new NullPointerException("Workflow definition is null");
+        }
         return workflowDefinition.getVersion();
     }
 
     /**
-     * @param externalOutputPayloadStoragePath the external storage path where the workflow output payload is stored
+     * @param externalOutputPayloadStoragePath the external storage path where the workflow output
+     *     payload is stored
      */
     public void setExternalOutputPayloadStoragePath(String externalOutputPayloadStoragePath) {
         this.externalOutputPayloadStoragePath = externalOutputPayloadStoragePath;
@@ -434,13 +450,17 @@ public class Workflow extends Auditable {
     public Task getTaskByRefName(String refName) {
         if (refName == null) {
             throw new RuntimeException(
-                "refName passed is null.  Check the workflow execution.  For dynamic tasks, make sure referenceTaskName is set to a not null value");
+                    "refName passed is null.  Check the workflow execution.  For dynamic tasks, make sure referenceTaskName is set to a not null value");
         }
         LinkedList<Task> found = new LinkedList<>();
         for (Task t : tasks) {
             if (t.getReferenceTaskName() == null) {
                 throw new RuntimeException(
-                    "Task " + t.getTaskDefName() + ", seq=" + t.getSeq() + " does not have reference name specified.");
+                        "Task "
+                                + t.getTaskDefName()
+                                + ", seq="
+                                + t.getSeq()
+                                + " does not have reference name specified.");
             }
             if (t.getReferenceTaskName().equals(refName)) {
                 found.add(t);
@@ -469,14 +489,13 @@ public class Workflow extends Auditable {
         copy.setReasonForIncompletion(reasonForIncompletion);
         copy.setWorkflowDefinition(workflowDefinition);
         copy.setPriority(priority);
-        copy.setTasks(tasks.stream()
-            .map(Task::deepCopy)
-            .collect(Collectors.toList()));
+        copy.setTasks(tasks.stream().map(Task::deepCopy).collect(Collectors.toList()));
         copy.setVariables(variables);
         copy.setEndTime(endTime);
         copy.setLastRetriedTime(lastRetriedTime);
         copy.setTaskToDomain(taskToDomain);
         copy.setFailedReferenceTaskNames(failedReferenceTaskNames);
+        copy.setFailedTaskNames(failedTaskNames);
         copy.setExternalInputPayloadStoragePath(externalInputPayloadStoragePath);
         copy.setExternalOutputPayloadStoragePath(externalOutputPayloadStoragePath);
         return copy;
@@ -490,8 +509,8 @@ public class Workflow extends Auditable {
     }
 
     /**
-     * A string representation of all relevant fields that identify this workflow.
-     * Intended for use in log and other system generated messages.
+     * A string representation of all relevant fields that identify this workflow. Intended for use
+     * in log and other system generated messages.
      */
     public String toShortString() {
         String name = workflowDefinition != null ? workflowDefinition.getName() : null;
@@ -508,55 +527,61 @@ public class Workflow extends Auditable {
             return false;
         }
         Workflow workflow = (Workflow) o;
-        return getEndTime() == workflow.getEndTime() &&
-            getWorkflowVersion() == workflow.getWorkflowVersion() &&
-            getStatus() == workflow.getStatus() &&
-            Objects.equals(getWorkflowId(), workflow.getWorkflowId()) &&
-            Objects.equals(getParentWorkflowId(), workflow.getParentWorkflowId()) &&
-            Objects.equals(getParentWorkflowTaskId(), workflow.getParentWorkflowTaskId()) &&
-            Objects.equals(getTasks(), workflow.getTasks()) &&
-            Objects.equals(getInput(), workflow.getInput()) &&
-            Objects.equals(getOutput(), workflow.getOutput()) &&
-            Objects.equals(getWorkflowName(), workflow.getWorkflowName()) &&
-            Objects.equals(getCorrelationId(), workflow.getCorrelationId()) &&
-            Objects.equals(getReRunFromWorkflowId(), workflow.getReRunFromWorkflowId()) &&
-            Objects.equals(getReasonForIncompletion(), workflow.getReasonForIncompletion()) &&
-            Objects.equals(getEvent(), workflow.getEvent()) &&
-            Objects.equals(getTaskToDomain(), workflow.getTaskToDomain()) &&
-            Objects.equals(getFailedReferenceTaskNames(), workflow.getFailedReferenceTaskNames()) &&
-            Objects.equals(getExternalInputPayloadStoragePath(), workflow.getExternalInputPayloadStoragePath()) &&
-            Objects.equals(getExternalOutputPayloadStoragePath(), workflow.getExternalOutputPayloadStoragePath()) &&
-            Objects.equals(getPriority(), workflow.getPriority()) &&
-            Objects.equals(getWorkflowDefinition(), workflow.getWorkflowDefinition()) &&
-            Objects.equals(getVariables(), workflow.getVariables()) &&
-            Objects.equals(getLastRetriedTime(), workflow.getLastRetriedTime());
+        return getEndTime() == workflow.getEndTime()
+                && getWorkflowVersion() == workflow.getWorkflowVersion()
+                && getStatus() == workflow.getStatus()
+                && Objects.equals(getWorkflowId(), workflow.getWorkflowId())
+                && Objects.equals(getParentWorkflowId(), workflow.getParentWorkflowId())
+                && Objects.equals(getParentWorkflowTaskId(), workflow.getParentWorkflowTaskId())
+                && Objects.equals(getTasks(), workflow.getTasks())
+                && Objects.equals(getInput(), workflow.getInput())
+                && Objects.equals(getOutput(), workflow.getOutput())
+                && Objects.equals(getWorkflowName(), workflow.getWorkflowName())
+                && Objects.equals(getCorrelationId(), workflow.getCorrelationId())
+                && Objects.equals(getReRunFromWorkflowId(), workflow.getReRunFromWorkflowId())
+                && Objects.equals(getReasonForIncompletion(), workflow.getReasonForIncompletion())
+                && Objects.equals(getEvent(), workflow.getEvent())
+                && Objects.equals(getTaskToDomain(), workflow.getTaskToDomain())
+                && Objects.equals(
+                        getFailedReferenceTaskNames(), workflow.getFailedReferenceTaskNames())
+                && Objects.equals(getFailedTaskNames(), workflow.getFailedTaskNames())
+                && Objects.equals(
+                        getExternalInputPayloadStoragePath(),
+                        workflow.getExternalInputPayloadStoragePath())
+                && Objects.equals(
+                        getExternalOutputPayloadStoragePath(),
+                        workflow.getExternalOutputPayloadStoragePath())
+                && Objects.equals(getPriority(), workflow.getPriority())
+                && Objects.equals(getWorkflowDefinition(), workflow.getWorkflowDefinition())
+                && Objects.equals(getVariables(), workflow.getVariables())
+                && Objects.equals(getLastRetriedTime(), workflow.getLastRetriedTime());
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-            getStatus(),
-            getEndTime(),
-            getWorkflowId(),
-            getParentWorkflowId(),
-            getParentWorkflowTaskId(),
-            getTasks(),
-            getInput(),
-            getOutput(),
-            getWorkflowName(),
-            getWorkflowVersion(),
-            getCorrelationId(),
-            getReRunFromWorkflowId(),
-            getReasonForIncompletion(),
-            getEvent(),
-            getTaskToDomain(),
-            getFailedReferenceTaskNames(),
-            getWorkflowDefinition(),
-            getExternalInputPayloadStoragePath(),
-            getExternalOutputPayloadStoragePath(),
-            getPriority(),
-            getVariables(),
-            getLastRetriedTime()
-        );
+                getStatus(),
+                getEndTime(),
+                getWorkflowId(),
+                getParentWorkflowId(),
+                getParentWorkflowTaskId(),
+                getTasks(),
+                getInput(),
+                getOutput(),
+                getWorkflowName(),
+                getWorkflowVersion(),
+                getCorrelationId(),
+                getReRunFromWorkflowId(),
+                getReasonForIncompletion(),
+                getEvent(),
+                getTaskToDomain(),
+                getFailedReferenceTaskNames(),
+                getFailedTaskNames(),
+                getWorkflowDefinition(),
+                getExternalInputPayloadStoragePath(),
+                getExternalOutputPayloadStoragePath(),
+                getPriority(),
+                getVariables(),
+                getLastRetriedTime());
     }
 }

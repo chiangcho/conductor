@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,31 +12,27 @@
  */
 package com.netflix.conductor.es6.dao.index;
 
-import com.google.common.collect.ImmutableMap;
-import com.netflix.conductor.common.metadata.events.EventExecution;
-import com.netflix.conductor.common.metadata.events.EventHandler;
-import com.netflix.conductor.common.metadata.tasks.Task;
-import com.netflix.conductor.common.metadata.tasks.TaskExecLog;
-import com.netflix.conductor.common.run.TaskSummary;
-import com.netflix.conductor.common.run.Workflow;
-import com.netflix.conductor.common.run.WorkflowSummary;
-import com.netflix.conductor.core.events.queue.Message;
-import com.netflix.conductor.es6.utils.TestUtils;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
+
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.junit.Test;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
+import com.netflix.conductor.common.metadata.events.EventExecution;
+import com.netflix.conductor.common.metadata.events.EventHandler;
+import com.netflix.conductor.common.metadata.tasks.TaskExecLog;
+import com.netflix.conductor.common.run.TaskSummary;
+import com.netflix.conductor.common.run.Workflow.WorkflowStatus;
+import com.netflix.conductor.common.run.WorkflowSummary;
+import com.netflix.conductor.core.events.queue.Message;
+import com.netflix.conductor.es6.utils.TestUtils;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.ImmutableMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -59,9 +55,12 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
         String workflowIndex = INDEX_PREFIX + "_" + WORKFLOW_DOC_TYPE;
         String taskIndex = INDEX_PREFIX + "_" + TASK_DOC_TYPE;
 
-        String taskLogIndex = INDEX_PREFIX + "_" + LOG_INDEX_PREFIX + "_" + SIMPLE_DATE_FORMAT.format(new Date());
-        String messageIndex = INDEX_PREFIX + "_" + MSG_DOC_TYPE + "_" + SIMPLE_DATE_FORMAT.format(new Date());
-        String eventIndex = INDEX_PREFIX + "_" + EVENT_DOC_TYPE + "_" + SIMPLE_DATE_FORMAT.format(new Date());
+        String taskLogIndex =
+                INDEX_PREFIX + "_" + LOG_INDEX_PREFIX + "_" + SIMPLE_DATE_FORMAT.format(new Date());
+        String messageIndex =
+                INDEX_PREFIX + "_" + MSG_DOC_TYPE + "_" + SIMPLE_DATE_FORMAT.format(new Date());
+        String eventIndex =
+                INDEX_PREFIX + "_" + EVENT_DOC_TYPE + "_" + SIMPLE_DATE_FORMAT.format(new Date());
 
         assertTrue("Index 'conductor_workflow' should exist", indexExists("conductor_workflow"));
         assertTrue("Index 'conductor_task' should exist", indexExists("conductor_task"));
@@ -70,9 +69,12 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
         assertTrue("Index '" + messageIndex + "' should exist", indexExists(messageIndex));
         assertTrue("Index '" + eventIndex + "' should exist", indexExists(eventIndex));
 
-        assertTrue("Mapping 'workflow' for index 'conductor' should exist",
-            doesMappingExist(workflowIndex, WORKFLOW_DOC_TYPE));
-        assertTrue("Mapping 'task' for index 'conductor' should exist", doesMappingExist(taskIndex, TASK_DOC_TYPE));
+        assertTrue(
+                "Mapping 'workflow' for index 'conductor' should exist",
+                doesMappingExist(workflowIndex, WORKFLOW_DOC_TYPE));
+        assertTrue(
+                "Mapping 'task' for index 'conductor' should exist",
+                doesMappingExist(taskIndex, TASK_DOC_TYPE));
     }
 
     private boolean indexExists(final String index) {
@@ -85,45 +87,36 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
     }
 
     private boolean doesMappingExist(final String index, final String mappingName) {
-        GetMappingsRequest request = new GetMappingsRequest()
-            .indices(index);
+        GetMappingsRequest request = new GetMappingsRequest().indices(index);
         try {
-            GetMappingsResponse response = elasticSearchClient.admin()
-                .indices()
-                .getMappings(request)
-                .get();
+            GetMappingsResponse response =
+                    elasticSearchClient.admin().indices().getMappings(request).get();
 
-            return response.getMappings()
-                .get(index)
-                .containsKey(mappingName);
+            return response.getMappings().get(index).containsKey(mappingName);
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Test
-    public void shouldIndexWorkflow() {
-        Workflow workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow");
-        WorkflowSummary summary = new WorkflowSummary(workflow);
-
+    public void shouldIndexWorkflow() throws JsonProcessingException {
+        WorkflowSummary workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow_summary");
         indexDAO.indexWorkflow(workflow);
 
-        assertWorkflowSummary(workflow.getWorkflowId(), summary);
+        assertWorkflowSummary(workflow.getWorkflowId(), workflow);
     }
 
     @Test
     public void shouldIndexWorkflowAsync() throws Exception {
-        Workflow workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow");
-        WorkflowSummary summary = new WorkflowSummary(workflow);
-
+        WorkflowSummary workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow_summary");
         indexDAO.asyncIndexWorkflow(workflow).get();
 
-        assertWorkflowSummary(workflow.getWorkflowId(), summary);
+        assertWorkflowSummary(workflow.getWorkflowId(), workflow);
     }
 
     @Test
     public void shouldRemoveWorkflow() {
-        Workflow workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow");
+        WorkflowSummary workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow_summary");
         indexDAO.indexWorkflow(workflow);
 
         // wait for workflow to be indexed
@@ -139,7 +132,7 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
 
     @Test
     public void shouldAsyncRemoveWorkflow() throws Exception {
-        Workflow workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow");
+        WorkflowSummary workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow_summary");
         indexDAO.indexWorkflow(workflow);
 
         // wait for workflow to be indexed
@@ -154,59 +147,53 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
     }
 
     @Test
-    public void shouldUpdateWorkflow() {
-        Workflow workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow");
-        WorkflowSummary summary = new WorkflowSummary(workflow);
-
+    public void shouldUpdateWorkflow() throws JsonProcessingException {
+        WorkflowSummary workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow_summary");
         indexDAO.indexWorkflow(workflow);
 
-        indexDAO.updateWorkflow(workflow.getWorkflowId(), new String[]{"status"},
-            new Object[]{Workflow.WorkflowStatus.COMPLETED});
+        indexDAO.updateWorkflow(
+                workflow.getWorkflowId(),
+                new String[] {"status"},
+                new Object[] {WorkflowStatus.COMPLETED});
 
-        summary.setStatus(Workflow.WorkflowStatus.COMPLETED);
-        assertWorkflowSummary(workflow.getWorkflowId(), summary);
+        workflow.setStatus(WorkflowStatus.COMPLETED);
+        assertWorkflowSummary(workflow.getWorkflowId(), workflow);
     }
 
     @Test
     public void shouldAsyncUpdateWorkflow() throws Exception {
-        Workflow workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow");
-        WorkflowSummary summary = new WorkflowSummary(workflow);
-
+        WorkflowSummary workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow_summary");
         indexDAO.indexWorkflow(workflow);
 
-        indexDAO.asyncUpdateWorkflow(workflow.getWorkflowId(), new String[]{"status"},
-            new Object[]{Workflow.WorkflowStatus.FAILED}).get();
+        indexDAO.asyncUpdateWorkflow(
+                        workflow.getWorkflowId(),
+                        new String[] {"status"},
+                        new Object[] {WorkflowStatus.FAILED})
+                .get();
 
-        summary.setStatus(Workflow.WorkflowStatus.FAILED);
-        assertWorkflowSummary(workflow.getWorkflowId(), summary);
+        workflow.setStatus(WorkflowStatus.FAILED);
+        assertWorkflowSummary(workflow.getWorkflowId(), workflow);
     }
 
     @Test
     public void shouldIndexTask() {
-        Workflow workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow");
-        Task task = workflow.getTasks().get(0);
+        TaskSummary taskSummary = TestUtils.loadTaskSnapshot(objectMapper, "task_summary");
+        indexDAO.indexTask(taskSummary);
 
-        TaskSummary summary = new TaskSummary(task);
+        List<String> tasks = tryFindResults(() -> searchTasks(taskSummary));
 
-        indexDAO.indexTask(task);
-
-        List<String> tasks = tryFindResults(() -> searchTasks(workflow));
-
-        assertEquals(summary.getTaskId(), tasks.get(0));
+        assertEquals(taskSummary.getTaskId(), tasks.get(0));
     }
 
     @Test
     public void shouldIndexTaskAsync() throws Exception {
-        Workflow workflow = TestUtils.loadWorkflowSnapshot(objectMapper, "workflow");
-        Task task = workflow.getTasks().get(0);
+        TaskSummary taskSummary = TestUtils.loadTaskSnapshot(objectMapper, "task_summary");
 
-        TaskSummary summary = new TaskSummary(task);
+        indexDAO.asyncIndexTask(taskSummary).get();
 
-        indexDAO.asyncIndexTask(task).get();
+        List<String> tasks = tryFindResults(() -> searchTasks(taskSummary));
 
-        List<String> tasks = tryFindResults(() -> searchTasks(workflow));
-
-        assertEquals(summary.getTaskId(), tasks.get(0));
+        assertEquals(taskSummary.getTaskId(), tasks.get(0));
     }
 
     @Test
@@ -219,7 +206,8 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
 
         indexDAO.addTaskExecutionLogs(logs);
 
-        List<TaskExecLog> indexedLogs = tryFindResults(() -> indexDAO.getTaskExecutionLogs(taskId), 3);
+        List<TaskExecLog> indexedLogs =
+                tryFindResults(() -> indexDAO.getTaskExecutionLogs(taskId), 3);
 
         assertEquals(3, indexedLogs.size());
 
@@ -236,7 +224,8 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
 
         indexDAO.asyncAddTaskExecutionLogs(logs).get();
 
-        List<TaskExecLog> indexedLogs = tryFindResults(() -> indexDAO.getTaskExecutionLogs(taskId), 3);
+        List<TaskExecLog> indexedLogs =
+                tryFindResults(() -> indexDAO.getTaskExecutionLogs(taskId), 3);
 
         assertEquals(3, indexedLogs.size());
 
@@ -256,7 +245,9 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
 
         assertEquals(2, indexedMessages.size());
 
-        assertTrue("Not all messages was indexed", indexedMessages.containsAll(Arrays.asList(message1, message2)));
+        assertTrue(
+                "Not all messages was indexed",
+                indexedMessages.containsAll(Arrays.asList(message1, message2)));
     }
 
     @Test
@@ -268,12 +259,14 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
         indexDAO.addEventExecution(execution1);
         indexDAO.addEventExecution(execution2);
 
-        List<EventExecution> indexedExecutions = tryFindResults(() -> indexDAO.getEventExecutions(event), 2);
+        List<EventExecution> indexedExecutions =
+                tryFindResults(() -> indexDAO.getEventExecutions(event), 2);
 
         assertEquals(2, indexedExecutions.size());
 
-        assertTrue("Not all event executions was indexed",
-            indexedExecutions.containsAll(Arrays.asList(execution1, execution2)));
+        assertTrue(
+                "Not all event executions was indexed",
+                indexedExecutions.containsAll(Arrays.asList(execution1, execution2)));
     }
 
     @Test
@@ -285,12 +278,14 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
         indexDAO.asyncAddEventExecution(execution1).get();
         indexDAO.asyncAddEventExecution(execution2).get();
 
-        List<EventExecution> indexedExecutions = tryFindResults(() -> indexDAO.getEventExecutions(event), 2);
+        List<EventExecution> indexedExecutions =
+                tryFindResults(() -> indexDAO.getEventExecutions(event), 2);
 
         assertEquals(2, indexedExecutions.size());
 
-        assertTrue("Not all event executions was indexed", indexedExecutions.containsAll(
-            Arrays.asList(execution1, execution2)));
+        assertTrue(
+                "Not all event executions was indexed",
+                indexedExecutions.containsAll(Arrays.asList(execution1, execution2)));
     }
 
     @Test
@@ -302,7 +297,67 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
         assertEquals(json, content);
     }
 
-    private void assertWorkflowSummary(String workflowId, WorkflowSummary summary) {
+    @Test
+    public void shouldCountWorkflows() {
+        int counts = 1100;
+        for (int i = 0; i < counts; i++) {
+            WorkflowSummary workflow =
+                    TestUtils.loadWorkflowSnapshot(objectMapper, "workflow_summary");
+            indexDAO.indexWorkflow(workflow);
+        }
+
+        // wait for workflow to be indexed
+        long result = tryGetCount(() -> getWorkflowCount("template_workflow", "RUNNING"), counts);
+        assertEquals(counts, result);
+    }
+
+    @Test
+    public void shouldFindWorkflow() {
+        WorkflowSummary workflowSummary =
+                TestUtils.loadWorkflowSnapshot(objectMapper, "workflow_summary");
+        indexDAO.indexWorkflow(workflowSummary);
+
+        // wait for workflow to be indexed
+        List<WorkflowSummary> workflows =
+                tryFindResults(() -> searchWorkflowSummary(workflowSummary.getWorkflowId()), 1);
+        assertEquals(1, workflows.size());
+        assertEquals(workflowSummary, workflows.get(0));
+    }
+
+    @Test
+    public void shouldFindTask() {
+        TaskSummary taskSummary = TestUtils.loadTaskSnapshot(objectMapper, "task_summary");
+        indexDAO.indexTask(taskSummary);
+
+        List<TaskSummary> tasks = tryFindResults(() -> searchTaskSummary(taskSummary));
+        assertEquals(1, tasks.size());
+        assertEquals(taskSummary, tasks.get(0));
+    }
+
+    private long tryGetCount(Supplier<Long> countFunction, int resultsCount) {
+        long result = 0;
+        for (int i = 0; i < 20; i++) {
+            result = countFunction.get();
+            if (result == resultsCount) {
+                return result;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+        return result;
+    }
+
+    // Get total workflow counts given the name and status
+    private long getWorkflowCount(String workflowName, String status) {
+        return indexDAO.getWorkflowCount(
+                "status=\"" + status + "\" AND workflowType=\"" + workflowName + "\"", "*");
+    }
+
+    private void assertWorkflowSummary(String workflowId, WorkflowSummary summary)
+            throws JsonProcessingException {
         assertEquals(summary.getWorkflowType(), indexDAO.get(workflowId, "workflowType"));
         assertEquals(String.valueOf(summary.getVersion()), indexDAO.get(workflowId, "version"));
         assertEquals(summary.getWorkflowId(), indexDAO.get(workflowId, "workflowId"));
@@ -313,10 +368,19 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
         assertEquals(summary.getStatus().name(), indexDAO.get(workflowId, "status"));
         assertEquals(summary.getInput(), indexDAO.get(workflowId, "input"));
         assertEquals(summary.getOutput(), indexDAO.get(workflowId, "output"));
-        assertEquals(summary.getReasonForIncompletion(), indexDAO.get(workflowId, "reasonForIncompletion"));
-        assertEquals(String.valueOf(summary.getExecutionTime()), indexDAO.get(workflowId, "executionTime"));
+        assertEquals(
+                summary.getReasonForIncompletion(),
+                indexDAO.get(workflowId, "reasonForIncompletion"));
+        assertEquals(
+                String.valueOf(summary.getExecutionTime()),
+                indexDAO.get(workflowId, "executionTime"));
         assertEquals(summary.getEvent(), indexDAO.get(workflowId, "event"));
-        assertEquals(summary.getFailedReferenceTaskNames(), indexDAO.get(workflowId, "failedReferenceTaskNames"));
+        assertEquals(
+                summary.getFailedReferenceTaskNames(),
+                indexDAO.get(workflowId, "failedReferenceTaskNames"));
+        assertEquals(
+                summary.getFailedTaskNames(),
+                objectMapper.readValue(indexDAO.get(workflowId, "failedTaskNames"), Set.class));
     }
 
     private <T> List<T> tryFindResults(Supplier<List<T>> searchFunction) {
@@ -340,14 +404,35 @@ public class TestElasticSearchDAOV6 extends ElasticSearchDaoBaseTest {
     }
 
     private List<String> searchWorkflows(String workflowId) {
-        return indexDAO.searchWorkflows("", "workflowId:\"" + workflowId + "\"", 0, 100, Collections.emptyList())
-            .getResults();
+        return indexDAO.searchWorkflows(
+                        "", "workflowId:\"" + workflowId + "\"", 0, 100, Collections.emptyList())
+                .getResults();
     }
 
-    private List<String> searchTasks(Workflow workflow) {
-        return indexDAO
-            .searchTasks("", "workflowId:\"" + workflow.getWorkflowId() + "\"", 0, 100, Collections.emptyList())
-            .getResults();
+    private List<WorkflowSummary> searchWorkflowSummary(String workflowId) {
+        return indexDAO.searchWorkflowSummary(
+                        "", "workflowId:\"" + workflowId + "\"", 0, 100, Collections.emptyList())
+                .getResults();
+    }
+
+    private List<String> searchTasks(TaskSummary taskSummary) {
+        return indexDAO.searchTasks(
+                        "",
+                        "workflowId:\"" + taskSummary.getWorkflowId() + "\"",
+                        0,
+                        100,
+                        Collections.emptyList())
+                .getResults();
+    }
+
+    private List<TaskSummary> searchTaskSummary(TaskSummary taskSummary) {
+        return indexDAO.searchTaskSummary(
+                        "",
+                        "workflowId:\"" + taskSummary.getWorkflowId() + "\"",
+                        0,
+                        100,
+                        Collections.emptyList())
+                .getResults();
     }
 
     private TaskExecLog createLog(String taskId, String log) {

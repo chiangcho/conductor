@@ -12,21 +12,24 @@
  */
 package com.netflix.conductor.common.metadata.events;
 
-import com.github.vmg.protogen.annotations.ProtoEnum;
-import com.github.vmg.protogen.annotations.ProtoField;
-import com.github.vmg.protogen.annotations.ProtoMessage;
-import com.netflix.conductor.common.metadata.events.EventHandler.Action;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import com.netflix.conductor.annotations.protogen.ProtoEnum;
+import com.netflix.conductor.annotations.protogen.ProtoField;
+import com.netflix.conductor.annotations.protogen.ProtoMessage;
+import com.netflix.conductor.common.metadata.events.EventHandler.Action;
 
 @ProtoMessage
 public class EventExecution {
 
     @ProtoEnum
     public enum Status {
-        IN_PROGRESS, COMPLETED, FAILED, SKIPPED
+        IN_PROGRESS,
+        COMPLETED,
+        FAILED,
+        SKIPPED
     }
 
     @ProtoField(id = 1)
@@ -53,9 +56,7 @@ public class EventExecution {
     @ProtoField(id = 8)
     private Map<String, Object> output = new HashMap<>();
 
-    public EventExecution() {
-
-    }
+    public EventExecution() {}
 
     public EventExecution(String id, String messageId) {
         this.id = id;
@@ -75,7 +76,6 @@ public class EventExecution {
     public void setId(String id) {
         this.id = id;
     }
-
 
     /**
      * @return the messageId
@@ -184,14 +184,14 @@ public class EventExecution {
             return false;
         }
         EventExecution execution = (EventExecution) o;
-        return created == execution.created &&
-            Objects.equals(id, execution.id) &&
-            Objects.equals(messageId, execution.messageId) &&
-            Objects.equals(name, execution.name) &&
-            Objects.equals(event, execution.event) &&
-            status == execution.status &&
-            action == execution.action &&
-            Objects.equals(output, execution.output);
+        return created == execution.created
+                && Objects.equals(id, execution.id)
+                && Objects.equals(messageId, execution.messageId)
+                && Objects.equals(name, execution.name)
+                && Objects.equals(event, execution.event)
+                && status == execution.status
+                && action == execution.action
+                && Objects.equals(output, execution.output);
     }
 
     @Override

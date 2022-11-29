@@ -12,18 +12,20 @@
  */
 package com.netflix.conductor.redis.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Configuration;
 
 import com.netflix.conductor.core.config.ConductorProperties;
 import com.netflix.conductor.redis.jedis.JedisStandalone;
 import com.netflix.dyno.connectionpool.Host;
 import com.netflix.dyno.connectionpool.HostSupplier;
 import com.netflix.dyno.connectionpool.TokenMapSupplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
+
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.Protocol;
 import redis.clients.jedis.commands.JedisCommands;
 
 @Configuration(proxyBeanMethods = false)
@@ -33,15 +35,30 @@ public class RedisStandaloneConfiguration extends JedisCommandsConfigurer {
     private static final Logger log = LoggerFactory.getLogger(RedisSentinelConfiguration.class);
 
     @Override
-    protected JedisCommands createJedisCommands(RedisProperties properties,
-                                                ConductorProperties conductorProperties,
-                                                HostSupplier hostSupplier,
-                                                TokenMapSupplier tokenMapSupplier) {
+    protected JedisCommands createJedisCommands(
+            RedisProperties properties,
+            ConductorProperties conductorProperties,
+            HostSupplier hostSupplier,
+            TokenMapSupplier tokenMapSupplier) {
         JedisPoolConfig config = new JedisPoolConfig();
         config.setMinIdle(2);
         config.setMaxTotal(properties.getMaxConnectionsPerHost());
         log.info("Starting conductor server using redis_standalone.");
-        Host host = hostSupplier.getHosts().get(0);        
-        return new JedisStandalone(new JedisPool(config, host.getHostName(), host.getPort(),10000, host.getPassword()));
+        Host host = hostSupplier.getHosts().get(0);
+        return new JedisStandalone(getJedisPool(config, host));
+    }
+
+    private JedisPool getJedisPool(JedisPoolConfig config, Host host) {
+        if (host.getPassword() != null) {
+            log.info("Connecting to Redis Standalone with AUTH");
+            return new JedisPool(
+                    config,
+                    host.getHostName(),
+                    host.getPort(),
+                    Protocol.DEFAULT_TIMEOUT,
+                    host.getPassword());
+        } else {
+            return new JedisPool(config, host.getHostName(), host.getPort());
+        }
     }
 }

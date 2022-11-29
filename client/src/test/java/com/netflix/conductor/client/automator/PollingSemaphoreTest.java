@@ -12,14 +12,14 @@
  */
 package com.netflix.conductor.client.automator;
 
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
+
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -34,16 +34,22 @@ public class PollingSemaphoreTest {
         PollingSemaphore pollingSemaphore = new PollingSemaphore(threads);
 
         List<CompletableFuture<Void>> futuresList = new ArrayList<>();
-        IntStream.range(0, threads).forEach(
-            t -> futuresList.add(CompletableFuture.runAsync(pollingSemaphore::canPoll, executorService)));
+        IntStream.range(0, threads)
+                .forEach(
+                        t ->
+                                futuresList.add(
+                                        CompletableFuture.runAsync(
+                                                () -> pollingSemaphore.acquireSlots(1),
+                                                executorService)));
 
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(
-            futuresList.toArray(new CompletableFuture[futuresList.size()]));
+        CompletableFuture<Void> allFutures =
+                CompletableFuture.allOf(
+                        futuresList.toArray(new CompletableFuture[futuresList.size()]));
 
         allFutures.get();
 
-        assertEquals(0, pollingSemaphore.availableThreads());
-        assertFalse(pollingSemaphore.canPoll());
+        assertEquals(0, pollingSemaphore.availableSlots());
+        assertFalse(pollingSemaphore.acquireSlots(1));
 
         executorService.shutdown();
     }
@@ -55,18 +61,24 @@ public class PollingSemaphoreTest {
         PollingSemaphore pollingSemaphore = new PollingSemaphore(threads);
 
         List<CompletableFuture<Void>> futuresList = new ArrayList<>();
-        IntStream.range(0, threads).forEach(
-            t -> futuresList.add(CompletableFuture.runAsync(pollingSemaphore::canPoll, executorService)));
+        IntStream.range(0, threads)
+                .forEach(
+                        t ->
+                                futuresList.add(
+                                        CompletableFuture.runAsync(
+                                                () -> pollingSemaphore.acquireSlots(1),
+                                                executorService)));
 
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(
-            futuresList.toArray(new CompletableFuture[futuresList.size()]));
+        CompletableFuture<Void> allFutures =
+                CompletableFuture.allOf(
+                        futuresList.toArray(new CompletableFuture[futuresList.size()]));
         allFutures.get();
 
-        assertEquals(0, pollingSemaphore.availableThreads());
-        pollingSemaphore.complete();
+        assertEquals(0, pollingSemaphore.availableSlots());
+        pollingSemaphore.complete(1);
 
-        assertTrue(pollingSemaphore.availableThreads() > 0);
-        assertTrue(pollingSemaphore.canPoll());
+        assertTrue(pollingSemaphore.availableSlots() > 0);
+        assertTrue(pollingSemaphore.acquireSlots(1));
 
         executorService.shutdown();
     }

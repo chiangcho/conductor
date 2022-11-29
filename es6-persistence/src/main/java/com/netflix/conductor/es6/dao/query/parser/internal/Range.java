@@ -38,7 +38,6 @@ public class Range extends AbstractNode {
             throw new ParserException("Missing the upper range value...");
         }
         this.high = num;
-
     }
 
     private String readNumber(InputStream is) throws Exception {

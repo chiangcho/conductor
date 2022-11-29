@@ -12,23 +12,23 @@
  */
 package com.netflix.conductor.common.metadata.events;
 
-import com.github.vmg.protogen.annotations.ProtoEnum;
-import com.github.vmg.protogen.annotations.ProtoField;
-import com.github.vmg.protogen.annotations.ProtoMessage;
-import com.google.protobuf.Any;
-import io.swagger.v3.oas.annotations.Hidden;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Defines an event handler
- */
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
+import com.netflix.conductor.annotations.protogen.ProtoEnum;
+import com.netflix.conductor.annotations.protogen.ProtoField;
+import com.netflix.conductor.annotations.protogen.ProtoMessage;
+
+import com.google.protobuf.Any;
+import io.swagger.v3.oas.annotations.Hidden;
+
+/** Defines an event handler */
 @ProtoMessage
 public class EventHandler {
 
@@ -51,9 +51,10 @@ public class EventHandler {
     @ProtoField(id = 5)
     private boolean active;
 
-    public EventHandler() {
+    @ProtoField(id = 6)
+    private String evaluatorType;
 
-    }
+    public EventHandler() {}
 
     /**
      * @return the name MUST be unique within a conductor instance
@@ -125,13 +126,28 @@ public class EventHandler {
         this.active = active;
     }
 
+    /**
+     * @return the evaluator type
+     */
+    public String getEvaluatorType() {
+        return evaluatorType;
+    }
+
+    /**
+     * @param evaluatorType the evaluatorType to set
+     */
+    public void setEvaluatorType(String evaluatorType) {
+        this.evaluatorType = evaluatorType;
+    }
 
     @ProtoMessage
     public static class Action {
 
         @ProtoEnum
         public enum Type {
-            start_workflow, complete_task, fail_task
+            start_workflow,
+            complete_task,
+            fail_task
         }
 
         @ProtoField(id = 1)
@@ -206,7 +222,8 @@ public class EventHandler {
         }
 
         /**
-         * @param expandInlineJSON when set to true, the in-lined JSON strings are expanded to a full json document
+         * @param expandInlineJSON when set to true, the in-lined JSON strings are expanded to a
+         *     full json document
          */
         public void setExpandInlineJSON(boolean expandInlineJSON) {
             this.expandInlineJSON = expandInlineJSON;
@@ -353,7 +370,6 @@ public class EventHandler {
         public void setVersion(Integer version) {
             this.version = version;
         }
-
 
         /**
          * @return the correlationId

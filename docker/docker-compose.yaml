@@ -3,7 +3,7 @@ version: '2.3'
 services:
   conductor-server:
     environment:
-      - CONFIG_PROP=config.properties
+      - CONFIG_PROP=config-local.properties
     image: conductor:server
     build:
       context: ../
@@ -19,29 +19,9 @@ services:
       retries: 12
     links:
       - elasticsearch:es
-      - dynomite:dyno1
     depends_on:
       elasticsearch:
         condition: service_healthy
-      dynomite:
-        condition: service_healthy
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "1k"
-        max-file: "3"
-
-  dynomite:
-    image: v1r3n/dynomite
-    networks:
-      - internal
-    ports:
-      - 8102:8102
-    healthcheck:
-      test: timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/8102'
-      interval: 5s
-      timeout: 5s
-      retries: 12
     logging:
       driver: "json-file"
       options:
@@ -50,7 +30,7 @@ services:
 
   conductor-ui:
     environment:
-      - WF_SERVER=http://conductor-server:8080/api/
+      - WF_SERVER=http://conductor-server:8080
     image: conductor:ui
     build:
       context: ../
@@ -61,6 +41,7 @@ services:
       - 5000:5000
     links:
       - conductor-server
+    stdin_open: true
 
   elasticsearch:
     image: elasticsearch:6.8.15
@@ -69,6 +50,8 @@ services:
       - transport.host=0.0.0.0
       - discovery.type=single-node
       - xpack.security.enabled=false
+    volumes:
+      - esdata-conductor:/usr/share/elasticsearch/data
     networks:
       - internal
     ports:
@@ -84,6 +67,10 @@ services:
       options:
         max-size: "1k"
         max-file: "3"
+
+volumes:
+  esdata-conductor:
+    driver: local
 
 networks:
   internal:

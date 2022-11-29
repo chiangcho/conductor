@@ -1,51 +1,59 @@
 /*
- *  Copyright 2021 Netflix, Inc.
- *  <p>
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  the License. You may obtain a copy of the License at
- *  <p>
- *  http://www.apache.org/licenses/LICENSE-2.0
- *  <p>
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- *  specific language governing permissions and limitations under the License.
+ * Copyright 2021 Netflix, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.netflix.conductor.common.metadata.tasks;
 
-import com.github.vmg.protogen.annotations.ProtoEnum;
-import com.github.vmg.protogen.annotations.ProtoField;
-import com.github.vmg.protogen.annotations.ProtoMessage;
-import com.netflix.conductor.common.constraints.OwnerEmailMandatoryConstraint;
-import com.netflix.conductor.common.constraints.TaskTimeoutConstraint;
-import com.netflix.conductor.common.metadata.Auditable;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
+import com.netflix.conductor.annotations.protogen.ProtoEnum;
+import com.netflix.conductor.annotations.protogen.ProtoField;
+import com.netflix.conductor.annotations.protogen.ProtoMessage;
+import com.netflix.conductor.common.constraints.OwnerEmailMandatoryConstraint;
+import com.netflix.conductor.common.constraints.TaskTimeoutConstraint;
+import com.netflix.conductor.common.metadata.BaseDef;
+
 @ProtoMessage
 @TaskTimeoutConstraint
 @Valid
-public class TaskDef extends Auditable {
+public class TaskDef extends BaseDef {
 
     @ProtoEnum
-    public enum TimeoutPolicy {RETRY, TIME_OUT_WF, ALERT_ONLY}
+    public enum TimeoutPolicy {
+        RETRY,
+        TIME_OUT_WF,
+        ALERT_ONLY
+    }
 
     @ProtoEnum
-    public enum RetryLogic {FIXED, EXPONENTIAL_BACKOFF}
+    public enum RetryLogic {
+        FIXED,
+        EXPONENTIAL_BACKOFF,
+        LINEAR_BACKOFF
+    }
 
-    private static final int ONE_HOUR = 60 * 60;
+    public static final int ONE_HOUR = 60 * 60;
 
-    /**
-     * Unique name identifying the task.  The name is unique across
-     */
+    /** Unique name identifying the task. The name is unique across */
     @NotEmpty(message = "TaskDef name cannot be null or empty")
     @ProtoField(id = 1)
     private String name;
@@ -55,6 +63,7 @@ public class TaskDef extends Auditable {
 
     @ProtoField(id = 3)
     @Min(value = 0, message = "TaskDef retryCount: {value} must be >= 0")
+    @Max(value = 10, message = "TaskDef retryCount: {value} must be <=10")
     private int retryCount = 3; // Default
 
     @ProtoField(id = 4)
@@ -77,7 +86,10 @@ public class TaskDef extends Auditable {
     private int retryDelaySeconds = 60;
 
     @ProtoField(id = 10)
-    @Min(value = 1, message = "TaskDef responseTimeoutSeconds: ${validatedValue} should be minimum {value} second")
+    @Min(
+            value = 1,
+            message =
+                    "TaskDef responseTimeoutSeconds: ${validatedValue} should be minimum {value} second")
     private long responseTimeoutSeconds = ONE_HOUR;
 
     @ProtoField(id = 11)
@@ -111,8 +123,11 @@ public class TaskDef extends Auditable {
     @Min(value = 0, message = "TaskDef pollTimeoutSeconds: {value} must be >= 0")
     private Integer pollTimeoutSeconds;
 
-    public TaskDef() {
-    }
+    @ProtoField(id = 20)
+    @Min(value = 1, message = "Backoff scale factor. Applicable for LINEAR_BACKOFF")
+    private Integer backoffScaleFactor = 1;
+
+    public TaskDef() {}
 
     public TaskDef(String name) {
         this.name = name;
@@ -130,8 +145,13 @@ public class TaskDef extends Auditable {
         this.timeoutSeconds = timeoutSeconds;
     }
 
-    public TaskDef(String name, String description, String ownerEmail, int retryCount,
-                   long timeoutSeconds, long responseTimeoutSeconds) {
+    public TaskDef(
+            String name,
+            String description,
+            String ownerEmail,
+            int retryCount,
+            long timeoutSeconds,
+            long responseTimeoutSeconds) {
         this.name = name;
         this.description = description;
         this.ownerEmail = ownerEmail;
@@ -224,7 +244,6 @@ public class TaskDef extends Auditable {
         this.outputKeys = outputKeys;
     }
 
-
     /**
      * @return the timeoutPolicy
      */
@@ -261,15 +280,15 @@ public class TaskDef extends Auditable {
     }
 
     /**
-     * @return the timeout for task to send response.  After this timeout, the task will be re-queued
+     * @return the timeout for task to send response. After this timeout, the task will be re-queued
      */
     public long getResponseTimeoutSeconds() {
         return responseTimeoutSeconds;
     }
 
     /**
-     * @param responseTimeoutSeconds - timeout for task to send response.  After this timeout, the task will be
-     *                               re-queued
+     * @param responseTimeoutSeconds - timeout for task to send response. After this timeout, the
+     *     task will be re-queued
      */
     public void setResponseTimeoutSeconds(long responseTimeoutSeconds) {
         this.responseTimeoutSeconds = responseTimeoutSeconds;
@@ -289,10 +308,9 @@ public class TaskDef extends Auditable {
         return inputTemplate;
     }
 
-
     /**
      * @return rateLimitPerFrequency The max number of tasks that will be allowed to be executed per
-     * rateLimitFrequencyInSeconds.
+     *     rateLimitFrequencyInSeconds.
      */
     public Integer getRateLimitPerFrequency() {
         return rateLimitPerFrequency == null ? 0 : rateLimitPerFrequency;
@@ -300,39 +318,39 @@ public class TaskDef extends Auditable {
 
     /**
      * @param rateLimitPerFrequency The max number of tasks that will be allowed to be executed per
-     *                              rateLimitFrequencyInSeconds. Setting the value to 0 removes the rate limit
+     *     rateLimitFrequencyInSeconds. Setting the value to 0 removes the rate limit
      */
     public void setRateLimitPerFrequency(Integer rateLimitPerFrequency) {
         this.rateLimitPerFrequency = rateLimitPerFrequency;
     }
 
     /**
-     * @return rateLimitFrequencyInSeconds: The time bucket that is used to rate limit tasks based on {@link
-     * #getRateLimitPerFrequency()} If null or not set, then defaults to 1 second
+     * @return rateLimitFrequencyInSeconds: The time bucket that is used to rate limit tasks based
+     *     on {@link #getRateLimitPerFrequency()} If null or not set, then defaults to 1 second
      */
     public Integer getRateLimitFrequencyInSeconds() {
         return rateLimitFrequencyInSeconds == null ? 1 : rateLimitFrequencyInSeconds;
     }
 
     /**
-     * @param rateLimitFrequencyInSeconds: The time window/bucket for which the rate limit needs to be applied. This
-     *                                     will only have affect if {@link #getRateLimitPerFrequency()} is greater than
-     *                                     zero
+     * @param rateLimitFrequencyInSeconds: The time window/bucket for which the rate limit needs to
+     *     be applied. This will only have affect if {@link #getRateLimitPerFrequency()} is greater
+     *     than zero
      */
     public void setRateLimitFrequencyInSeconds(Integer rateLimitFrequencyInSeconds) {
         this.rateLimitFrequencyInSeconds = rateLimitFrequencyInSeconds;
     }
 
     /**
-     * @param concurrentExecLimit Limit of number of concurrent task that can be  IN_PROGRESS at a given time.  Seting
-     *                            the value to 0 removes the limit.
+     * @param concurrentExecLimit Limit of number of concurrent task that can be IN_PROGRESS at a
+     *     given time. Seting the value to 0 removes the limit.
      */
     public void setConcurrentExecLimit(Integer concurrentExecLimit) {
         this.concurrentExecLimit = concurrentExecLimit;
     }
 
     /**
-     * @return Limit of number of concurrent task that can be  IN_PROGRESS at a given time
+     * @return Limit of number of concurrent task that can be IN_PROGRESS at a given time
      */
     public Integer getConcurrentExecLimit() {
         return concurrentExecLimit;
@@ -396,6 +414,20 @@ public class TaskDef extends Auditable {
         return pollTimeoutSeconds;
     }
 
+    /**
+     * @param backoffScaleFactor the backoff rate to set
+     */
+    public void setBackoffScaleFactor(Integer backoffScaleFactor) {
+        this.backoffScaleFactor = backoffScaleFactor;
+    }
+
+    /**
+     * @return the backoff rate of this task definition
+     */
+    public Integer getBackoffScaleFactor() {
+        return backoffScaleFactor;
+    }
+
     @Override
     public String toString() {
         return name;
@@ -410,30 +442,45 @@ public class TaskDef extends Auditable {
             return false;
         }
         TaskDef taskDef = (TaskDef) o;
-        return getRetryCount() == taskDef.getRetryCount() &&
-                getTimeoutSeconds() == taskDef.getTimeoutSeconds() &&
-                getRetryDelaySeconds() == taskDef.getRetryDelaySeconds() &&
-                getResponseTimeoutSeconds() == taskDef.getResponseTimeoutSeconds() &&
-                Objects.equals(getName(), taskDef.getName()) &&
-                Objects.equals(getDescription(), taskDef.getDescription()) &&
-                Objects.equals(getInputKeys(), taskDef.getInputKeys()) &&
-                Objects.equals(getOutputKeys(), taskDef.getOutputKeys()) &&
-                getTimeoutPolicy() == taskDef.getTimeoutPolicy() &&
-                getRetryLogic() == taskDef.getRetryLogic() &&
-                Objects.equals(getConcurrentExecLimit(), taskDef.getConcurrentExecLimit()) &&
-                Objects.equals(getRateLimitPerFrequency(), taskDef.getRateLimitPerFrequency()) &&
-                Objects.equals(getInputTemplate(), taskDef.getInputTemplate()) &&
-                Objects.equals(getIsolationGroupId(), taskDef.getIsolationGroupId()) &&
-                Objects.equals(getExecutionNameSpace(), taskDef.getExecutionNameSpace()) &&
-                Objects.equals(getOwnerEmail(), taskDef.getOwnerEmail());
+        return getRetryCount() == taskDef.getRetryCount()
+                && getTimeoutSeconds() == taskDef.getTimeoutSeconds()
+                && getRetryDelaySeconds() == taskDef.getRetryDelaySeconds()
+                && getBackoffScaleFactor() == taskDef.getBackoffScaleFactor()
+                && getResponseTimeoutSeconds() == taskDef.getResponseTimeoutSeconds()
+                && Objects.equals(getName(), taskDef.getName())
+                && Objects.equals(getDescription(), taskDef.getDescription())
+                && Objects.equals(getInputKeys(), taskDef.getInputKeys())
+                && Objects.equals(getOutputKeys(), taskDef.getOutputKeys())
+                && getTimeoutPolicy() == taskDef.getTimeoutPolicy()
+                && getRetryLogic() == taskDef.getRetryLogic()
+                && Objects.equals(getConcurrentExecLimit(), taskDef.getConcurrentExecLimit())
+                && Objects.equals(getRateLimitPerFrequency(), taskDef.getRateLimitPerFrequency())
+                && Objects.equals(getInputTemplate(), taskDef.getInputTemplate())
+                && Objects.equals(getIsolationGroupId(), taskDef.getIsolationGroupId())
+                && Objects.equals(getExecutionNameSpace(), taskDef.getExecutionNameSpace())
+                && Objects.equals(getOwnerEmail(), taskDef.getOwnerEmail());
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(getName(), getDescription(), getRetryCount(), getTimeoutSeconds(), getInputKeys(),
-                getOutputKeys(), getTimeoutPolicy(), getRetryLogic(), getRetryDelaySeconds(),
-                getResponseTimeoutSeconds(), getConcurrentExecLimit(), getRateLimitPerFrequency(), getInputTemplate(),
-                getIsolationGroupId(), getExecutionNameSpace(), getOwnerEmail());
+        return Objects.hash(
+                getName(),
+                getDescription(),
+                getRetryCount(),
+                getTimeoutSeconds(),
+                getInputKeys(),
+                getOutputKeys(),
+                getTimeoutPolicy(),
+                getRetryLogic(),
+                getRetryDelaySeconds(),
+                getBackoffScaleFactor(),
+                getResponseTimeoutSeconds(),
+                getConcurrentExecLimit(),
+                getRateLimitPerFrequency(),
+                getInputTemplate(),
+                getIsolationGroupId(),
+                getExecutionNameSpace(),
+                getOwnerEmail());
     }
 }

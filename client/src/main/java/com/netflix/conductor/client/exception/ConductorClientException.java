@@ -12,14 +12,12 @@
  */
 package com.netflix.conductor.client.exception;
 
+import java.util.List;
+
 import com.netflix.conductor.common.validation.ErrorResponse;
 import com.netflix.conductor.common.validation.ValidationError;
 
-import java.util.List;
-
-/**
- * Client exception thrown from Conductor api clients.
- */
+/** Client exception thrown from Conductor api clients. */
 public class ConductorClientException extends RuntimeException {
 
     private int status;
@@ -61,6 +59,7 @@ public class ConductorClientException extends RuntimeException {
     public ConductorClientException(int status, ErrorResponse errorResponse) {
         super(errorResponse.getMessage());
         this.status = status;
+        this.retryable = errorResponse.isRetryable();
         this.message = errorResponse.getMessage();
         this.code = errorResponse.getCode();
         this.instance = errorResponse.getInstance();

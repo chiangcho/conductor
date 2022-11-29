@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,11 +12,12 @@
  */
 package com.netflix.conductor.core.execution.tasks;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.netflix.conductor.core.utils.SemaphoreUtil;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+
+import com.netflix.conductor.core.utils.SemaphoreUtil;
 
 class ExecutionConfig {
 
@@ -25,8 +26,10 @@ class ExecutionConfig {
 
     ExecutionConfig(int threadCount, String threadNameFormat) {
 
-        this.executorService = Executors.newFixedThreadPool(threadCount,
-            new ThreadFactoryBuilder().setNameFormat(threadNameFormat).build());
+        this.executorService =
+                Executors.newFixedThreadPool(
+                        threadCount,
+                        new BasicThreadFactory.Builder().namingPattern(threadNameFormat).build());
 
         this.semaphoreUtil = new SemaphoreUtil(threadCount);
     }

@@ -12,12 +12,18 @@
  */
 package com.netflix.conductor.test.integration;
 
-import com.netflix.conductor.common.metadata.tasks.TaskDef;
-import com.netflix.conductor.common.metadata.tasks.TaskType;
-import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
-import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
-import com.netflix.conductor.common.run.Workflow;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+
 import org.apache.http.HttpHost;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
@@ -30,18 +36,19 @@ import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import com.netflix.conductor.common.metadata.events.EventHandler;
+import com.netflix.conductor.common.metadata.tasks.TaskDef;
+import com.netflix.conductor.common.metadata.tasks.TaskType;
+import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
+import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
+import com.netflix.conductor.common.run.Workflow;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-@TestPropertySource(properties = {"conductor.indexing.enabled=true", "conductor.elasticsearch.version=6"})
+@TestPropertySource(
+        properties = {"conductor.indexing.enabled=true", "conductor.elasticsearch.version=6"})
 public abstract class AbstractEndToEndTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractEndToEndTest.class);
@@ -52,9 +59,10 @@ public abstract class AbstractEndToEndTest {
     private static final String DEFAULT_NULL_VALUE = "null";
     protected static final String DEFAULT_EMAIL_ADDRESS = "test@harness.com";
 
-    private static final ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
-            .parse("docker.elastic.co/elasticsearch/elasticsearch-oss")
-            .withTag("6.8.12")); // this should match the client version
+    private static final ElasticsearchContainer container =
+            new ElasticsearchContainer(
+                    DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch-oss")
+                            .withTag("6.8.12")); // this should match the client version
 
     private static RestClient restClient;
 
@@ -82,7 +90,7 @@ public abstract class AbstractEndToEndTest {
     @AfterClass
     public static void cleanupEs() throws Exception {
         // deletes all indices
-        Response beforeResponse = restClient.performRequest("GET", "/_cat/indices");
+        Response beforeResponse = restClient.performRequest(new Request("GET", "/_cat/indices"));
         Reader streamReader = new InputStreamReader(beforeResponse.getEntity().getContent());
         BufferedReader bufferedReader = new BufferedReader(streamReader);
 
@@ -91,7 +99,7 @@ public abstract class AbstractEndToEndTest {
             String[] fields = line.split("\\s");
             String endpoint = String.format("/%s", fields[2]);
 
-            restClient.performRequest("DELETE", endpoint);
+            restClient.performRequest(new Request("DELETE", endpoint));
         }
 
         if (restClient != null) {
@@ -151,7 +159,8 @@ public abstract class AbstractEndToEndTest {
     public void testEphemeralWorkflowsWithEphemeralAndStoredTasks() {
         createAndRegisterTaskDefinitions("storedTask", 1);
 
-        WorkflowDef workflowDefinition = createWorkflowDefinition("testEphemeralWorkflowsWithEphemeralAndStoredTasks");
+        WorkflowDef workflowDefinition =
+                createWorkflowDefinition("testEphemeralWorkflowsWithEphemeralAndStoredTasks");
 
         WorkflowTask workflowTask1 = createWorkflowTask("ephemeralTask1");
         TaskDef taskDefinition1 = createTaskDefinition("ephemeralTaskDef1");
@@ -179,7 +188,28 @@ public abstract class AbstractEndToEndTest {
         TaskDef currentStoredTaskDefinition = tasks.get(1).getTaskDefinition();
         assertNotNull(currentStoredTaskDefinition);
         assertEquals(storedTaskDefinition, currentStoredTaskDefinition);
+    }
 
+    @Test
+    public void testEventHandler() {
+        String eventName = "conductor:test_workflow:complete_task_with_event";
+        EventHandler eventHandler = new EventHandler();
+        eventHandler.setName("test_complete_task_event");
+        EventHandler.Action completeTaskAction = new EventHandler.Action();
+        completeTaskAction.setAction(EventHandler.Action.Type.complete_task);
+        completeTaskAction.setComplete_task(new EventHandler.TaskDetails());
+        completeTaskAction.getComplete_task().setTaskRefName("test_task");
+        completeTaskAction.getComplete_task().setWorkflowId("test_id");
+        completeTaskAction.getComplete_task().setOutput(new HashMap<>());
+        eventHandler.getActions().add(completeTaskAction);
+        eventHandler.setEvent(eventName);
+        eventHandler.setActive(true);
+        registerEventHandler(eventHandler);
+
+        Iterator<EventHandler> it = getEventHandlers(eventName, true);
+        EventHandler result = it.next();
+        assertFalse(it.hasNext());
+        assertEquals(eventHandler.getName(), result.getName());
     }
 
     protected WorkflowTask createWorkflowTask(String name) {
@@ -194,6 +224,8 @@ public abstract class AbstractEndToEndTest {
         workflowTask.setDynamicForkTasksParam(DEFAULT_NULL_VALUE);
         workflowTask.setDynamicForkTasksInputParamName(DEFAULT_NULL_VALUE);
         workflowTask.setSink(DEFAULT_NULL_VALUE);
+        workflowTask.setEvaluatorType(DEFAULT_NULL_VALUE);
+        workflowTask.setExpression(DEFAULT_NULL_VALUE);
         return workflowTask;
     }
 
@@ -212,11 +244,19 @@ public abstract class AbstractEndToEndTest {
         return workflowDefinition;
     }
 
-    protected List<TaskDef> createAndRegisterTaskDefinitions(String prefixTaskDefinition, int numberOfTaskDefinitions) {
+    protected List<TaskDef> createAndRegisterTaskDefinitions(
+            String prefixTaskDefinition, int numberOfTaskDefinitions) {
         String prefix = Optional.ofNullable(prefixTaskDefinition).orElse(TASK_DEFINITION_PREFIX);
         List<TaskDef> definitions = new LinkedList<>();
         for (int i = 0; i < numberOfTaskDefinitions; i++) {
-            TaskDef def = new TaskDef(prefix + i, "task " + i + DEFAULT_DESCRIPTION, DEFAULT_EMAIL_ADDRESS, 3, 60, 60);
+            TaskDef def =
+                    new TaskDef(
+                            prefix + i,
+                            "task " + i + DEFAULT_DESCRIPTION,
+                            DEFAULT_EMAIL_ADDRESS,
+                            3,
+                            60,
+                            60);
             def.setTimeoutPolicy(TaskDef.TimeoutPolicy.RETRY);
             definitions.add(def);
         }
@@ -228,11 +268,18 @@ public abstract class AbstractEndToEndTest {
         return nameResource + " " + DEFAULT_DESCRIPTION;
     }
 
-    protected abstract String startWorkflow(String workflowExecutionName, WorkflowDef workflowDefinition);
+    protected abstract String startWorkflow(
+            String workflowExecutionName, WorkflowDef workflowDefinition);
 
     protected abstract Workflow getWorkflow(String workflowId, boolean includeTasks);
 
     protected abstract TaskDef getTaskDefinition(String taskName);
 
     protected abstract void registerTaskDefinitions(List<TaskDef> taskDefinitionList);
+
+    protected abstract void registerWorkflowDefinition(WorkflowDef workflowDefinition);
+
+    protected abstract void registerEventHandler(EventHandler eventHandler);
+
+    protected abstract Iterator<EventHandler> getEventHandlers(String event, boolean activeOnly);
 }

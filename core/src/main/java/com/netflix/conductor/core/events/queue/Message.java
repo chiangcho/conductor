@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,8 +21,7 @@ public class Message {
     private String receipt;
     private int priority;
 
-    public Message() {
-    }
+    public Message() {}
 
     public Message(String id, String payload, String receipt) {
         this.payload = payload;
@@ -89,7 +88,8 @@ public class Message {
     }
 
     /**
-     * Sets the message priority (between 0 and 99). Higher priority message is retrieved ahead of lower priority ones.
+     * Sets the message priority (between 0 and 99). Higher priority message is retrieved ahead of
+     * lower priority ones.
      *
      * @param priority the priority of message (between 0 and 99)
      */
@@ -111,10 +111,10 @@ public class Message {
             return false;
         }
         Message message = (Message) o;
-        return Objects.equals(payload, message.payload) &&
-            Objects.equals(id, message.id) &&
-            Objects.equals(priority, message.priority) &&
-            Objects.equals(receipt, message.receipt);
+        return Objects.equals(payload, message.payload)
+                && Objects.equals(id, message.id)
+                && Objects.equals(priority, message.priority)
+                && Objects.equals(receipt, message.receipt);
     }
 
     @Override

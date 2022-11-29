@@ -12,14 +12,15 @@
  */
 package com.netflix.conductor.rest.controllers;
 
-import com.netflix.conductor.common.metadata.tasks.TaskDef;
-import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
-import com.netflix.conductor.service.MetadataService;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.netflix.conductor.common.metadata.tasks.TaskDef;
+import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
+import com.netflix.conductor.service.MetadataService;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
@@ -47,6 +48,13 @@ public class MetadataResourceTest {
         WorkflowDef workflowDef = new WorkflowDef();
         metadataResource.create(workflowDef);
         verify(mockMetadataService, times(1)).registerWorkflowDef(any(WorkflowDef.class));
+    }
+
+    @Test
+    public void testValidateWorkflow() {
+        WorkflowDef workflowDef = new WorkflowDef();
+        metadataResource.validate(workflowDef);
+        verify(mockMetadataService, times(1)).validateWorkflowDef(any(WorkflowDef.class));
     }
 
     @Test

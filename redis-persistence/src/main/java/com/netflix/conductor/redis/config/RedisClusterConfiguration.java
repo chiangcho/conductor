@@ -12,32 +12,66 @@
  */
 package com.netflix.conductor.redis.config;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Configuration;
+
 import com.netflix.conductor.core.config.ConductorProperties;
 import com.netflix.conductor.redis.jedis.JedisCluster;
 import com.netflix.dyno.connectionpool.Host;
 import com.netflix.dyno.connectionpool.HostSupplier;
 import com.netflix.dyno.connectionpool.TokenMapSupplier;
-import java.util.stream.Collectors;
-import java.util.Set;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
+
 import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.Protocol;
 import redis.clients.jedis.commands.JedisCommands;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(name = "conductor.db.type", havingValue = "redis_cluster")
 public class RedisClusterConfiguration extends JedisCommandsConfigurer {
 
+    private static final Logger log = LoggerFactory.getLogger(JedisCommandsConfigurer.class);
+
+    // Same as redis.clients.jedis.BinaryJedisCluster
+    protected static final int DEFAULT_MAX_ATTEMPTS = 5;
+
     @Override
-    protected JedisCommands createJedisCommands(RedisProperties properties, ConductorProperties conductorProperties,
-        HostSupplier hostSupplier, TokenMapSupplier tokenMapSupplier) {
-        GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
+    protected JedisCommands createJedisCommands(
+            RedisProperties properties,
+            ConductorProperties conductorProperties,
+            HostSupplier hostSupplier,
+            TokenMapSupplier tokenMapSupplier) {
+        GenericObjectPoolConfig<?> genericObjectPoolConfig = new GenericObjectPoolConfig<>();
         genericObjectPoolConfig.setMaxTotal(properties.getMaxConnectionsPerHost());
-        Set hosts = hostSupplier.getHosts().stream()
-            .map(h -> new HostAndPort(h.getHostName(), h.getPort()))
-            .collect(Collectors.toSet());
-        Host host = hostSupplier.getHosts().get(0);
-        return new JedisCluster(new redis.clients.jedis.JedisCluster(hosts,2000,2000,5,host.getPassword(), genericObjectPoolConfig));
+        Set<HostAndPort> hosts =
+                hostSupplier.getHosts().stream()
+                        .map(h -> new HostAndPort(h.getHostName(), h.getPort()))
+                        .collect(Collectors.toSet());
+        String password = getPassword(hostSupplier.getHosts());
+
+        if (password != null) {
+            log.info("Connecting to Redis Cluster with AUTH");
+            return new JedisCluster(
+                    new redis.clients.jedis.JedisCluster(
+                            hosts,
+                            Protocol.DEFAULT_TIMEOUT,
+                            Protocol.DEFAULT_TIMEOUT,
+                            DEFAULT_MAX_ATTEMPTS,
+                            password,
+                            genericObjectPoolConfig));
+        } else {
+            return new JedisCluster(
+                    new redis.clients.jedis.JedisCluster(hosts, genericObjectPoolConfig));
+        }
+    }
+
+    private String getPassword(List<Host> hosts) {
+        return hosts.isEmpty() ? null : hosts.get(0).getPassword();
     }
 }

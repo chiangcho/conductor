@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Netflix, Inc.
+ * Copyright 2022 Netflix, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,19 +12,17 @@
  */
 package com.netflix.conductor.dao;
 
-import com.netflix.conductor.common.metadata.events.EventHandler;
-
 import java.util.List;
 
-/**
- * An abstraction to enable different Event Handler store implementations
- */
+import com.netflix.conductor.common.metadata.events.EventHandler;
+
+/** An abstraction to enable different Event Handler store implementations */
 public interface EventHandlerDAO {
 
     /**
      * @param eventHandler Event handler to be added.
-     *
-     * <em>NOTE:</em> Will throw an exception if an event handler already exists with the name
+     *     <p><em>NOTE:</em> Will throw an exception if an event handler already exists with the
+     *     name
      */
     void addEventHandler(EventHandler eventHandler);
 
@@ -44,7 +42,7 @@ public interface EventHandlerDAO {
     List<EventHandler> getAllEventHandlers();
 
     /**
-     * @param event      name of the event
+     * @param event name of the event
      * @param activeOnly if true, returns only the active handlers
      * @return Returns the list of all the event handlers for a given event
      */

@@ -1,25 +1,17 @@
 /*
- *  Copyright 2021 Netflix, Inc.
- *  <p>
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  the License. You may obtain a copy of the License at
- *  <p>
- *  http://www.apache.org/licenses/LICENSE-2.0
- *  <p>
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- *  specific language governing permissions and limitations under the License.
+ * Copyright 2021 Netflix, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.netflix.conductor.common.metadata.workflow;
 
-import com.github.vmg.protogen.annotations.ProtoField;
-import com.github.vmg.protogen.annotations.ProtoMessage;
-import com.netflix.conductor.common.metadata.tasks.TaskDef;
-import com.netflix.conductor.common.metadata.tasks.TaskType;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,9 +21,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.PositiveOrZero;
+
+import com.netflix.conductor.annotations.protogen.ProtoField;
+import com.netflix.conductor.annotations.protogen.ProtoMessage;
+import com.netflix.conductor.common.metadata.tasks.TaskDef;
+import com.netflix.conductor.common.metadata.tasks.TaskType;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
- * This is the task definition definied as part of the {@link WorkflowDef}. The tasks definied in the Workflow
- * definition are saved as part of {@link WorkflowDef#getTasks}
+ * This is the task definition definied as part of the {@link WorkflowDef}. The tasks definied in
+ * the Workflow definition are saved as part of {@link WorkflowDef#getTasks}
  */
 @ProtoMessage
 public class WorkflowTask {
@@ -56,9 +59,11 @@ public class WorkflowTask {
     @ProtoField(id = 6)
     private String dynamicTaskNameParam;
 
+    @Deprecated
     @ProtoField(id = 7)
     private String caseValueParam;
 
+    @Deprecated
     @ProtoField(id = 8)
     private String caseExpression;
 
@@ -80,12 +85,12 @@ public class WorkflowTask {
         private List<WorkflowTask> tasks;
     }
 
-    //Populates for the tasks of the decision type
+    // Populates for the tasks of the decision type
     @ProtoField(id = 9)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Map<String, @Valid List<@Valid WorkflowTask>> decisionCases = new LinkedHashMap<>();
 
-    @Deprecated
-    private String dynamicForkJoinTasksParam;
+    @Deprecated private String dynamicForkJoinTasksParam;
 
     @ProtoField(id = 10)
     private String dynamicForkTasksParam;
@@ -94,20 +99,23 @@ public class WorkflowTask {
     private String dynamicForkTasksInputParamName;
 
     @ProtoField(id = 12)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<@Valid WorkflowTask> defaultCase = new LinkedList<>();
 
     @ProtoField(id = 13)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<@Valid List<@Valid WorkflowTask>> forkTasks = new LinkedList<>();
 
     @ProtoField(id = 14)
     @PositiveOrZero
-    private int startDelay;    //No. of seconds (at-least) to wait before starting a task.
+    private int startDelay; // No. of seconds (at-least) to wait before starting a task.
 
     @ProtoField(id = 15)
     @Valid
     private SubWorkflowParams subWorkflowParam;
 
     @ProtoField(id = 16)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<String> joinOn = new LinkedList<>();
 
     @ProtoField(id = 17)
@@ -123,6 +131,7 @@ public class WorkflowTask {
     private Boolean rateLimited;
 
     @ProtoField(id = 21)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<String> defaultExclusiveJoinTask = new LinkedList<>();
 
     @ProtoField(id = 23)
@@ -132,10 +141,17 @@ public class WorkflowTask {
     private String loopCondition;
 
     @ProtoField(id = 25)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<WorkflowTask> loopOver = new LinkedList<>();
 
     @ProtoField(id = 26)
     private Integer retryCount;
+
+    @ProtoField(id = 27)
+    private String evaluatorType;
+
+    @ProtoField(id = 28)
+    private String expression;
 
     /**
      * @return the name
@@ -296,8 +312,11 @@ public class WorkflowTask {
     }
 
     /**
+     * @deprecated Use {@link WorkflowTask#getEvaluatorType()} and {@link
+     *     WorkflowTask#getExpression()} combination.
      * @return the caseValueParam
      */
+    @Deprecated
     public String getCaseValueParam() {
         return caseValueParam;
     }
@@ -330,28 +349,36 @@ public class WorkflowTask {
 
     /**
      * @param caseValueParam the caseValueParam to set
+     * @deprecated Use {@link WorkflowTask#getEvaluatorType()} and {@link
+     *     WorkflowTask#getExpression()} combination.
      */
+    @Deprecated
     public void setCaseValueParam(String caseValueParam) {
         this.caseValueParam = caseValueParam;
     }
 
     /**
-     * @return A javascript expression for decision cases.  The result should be a scalar value that is used to decide
-     * the case branches.
+     * @return A javascript expression for decision cases. The result should be a scalar value that
+     *     is used to decide the case branches.
      * @see #getDecisionCases()
+     * @deprecated Use {@link WorkflowTask#getEvaluatorType()} and {@link
+     *     WorkflowTask#getExpression()} combination.
      */
+    @Deprecated
     public String getCaseExpression() {
         return caseExpression;
     }
 
     /**
-     * @param caseExpression A javascript expression for decision cases.  The result should be a scalar value that is
-     *                       used to decide the case branches.
+     * @param caseExpression A javascript expression for decision cases. The result should be a
+     *     scalar value that is used to decide the case branches.
+     * @deprecated Use {@link WorkflowTask#getEvaluatorType()} and {@link
+     *     WorkflowTask#getExpression()} combination.
      */
+    @Deprecated
     public void setCaseExpression(String caseExpression) {
         this.caseExpression = caseExpression;
     }
-
 
     public String getScriptExpression() {
         return scriptExpression;
@@ -360,7 +387,6 @@ public class WorkflowTask {
     public void setScriptExpression(String expression) {
         this.scriptExpression = expression;
     }
-
 
     /**
      * @return the subWorkflow
@@ -444,8 +470,8 @@ public class WorkflowTask {
     }
 
     /**
-     * @return If the task is optional.  When set to true, the workflow execution continues even when the task is in
-     * failed status.
+     * @return If the task is optional. When set to true, the workflow execution continues even when
+     *     the task is in failed status.
      */
     public boolean isOptional() {
         return optional;
@@ -492,11 +518,42 @@ public class WorkflowTask {
         this.defaultExclusiveJoinTask = defaultExclusiveJoinTask;
     }
 
+    /**
+     * @return the evaluatorType
+     */
+    public String getEvaluatorType() {
+        return evaluatorType;
+    }
+
+    /**
+     * @param evaluatorType the evaluatorType to set
+     */
+    public void setEvaluatorType(String evaluatorType) {
+        this.evaluatorType = evaluatorType;
+    }
+
+    /**
+     * @return An evaluation expression for switch cases evaluated by corresponding evaluator. The
+     *     result should be a scalar value that is used to decide the case branches.
+     * @see #getDecisionCases()
+     */
+    public String getExpression() {
+        return expression;
+    }
+
+    /**
+     * @param expression the expression to set
+     */
+    public void setExpression(String expression) {
+        this.expression = expression;
+    }
+
     private Collection<List<WorkflowTask>> children() {
         Collection<List<WorkflowTask>> workflowTaskLists = new LinkedList<>();
 
         switch (TaskType.of(type)) {
             case DECISION:
+            case SWITCH:
                 workflowTaskLists.addAll(decisionCases.values());
                 workflowTaskLists.add(defaultCase);
                 break;
@@ -510,7 +567,6 @@ public class WorkflowTask {
                 break;
         }
         return workflowTaskLists;
-
     }
 
     public List<WorkflowTask> collectTasks() {
@@ -530,6 +586,7 @@ public class WorkflowTask {
         switch (taskType) {
             case DO_WHILE:
             case DECISION:
+            case SWITCH:
                 for (List<WorkflowTask> workflowTasks : children()) {
                     Iterator<WorkflowTask> iterator = workflowTasks.iterator();
                     while (iterator.hasNext()) {
@@ -550,8 +607,10 @@ public class WorkflowTask {
                     }
                 }
                 if (taskType == TaskType.DO_WHILE && this.has(taskReferenceName)) {
-                    // come here means this is DO_WHILE task and `taskReferenceName` is the last task in
-                    // this DO_WHILE task, because DO_WHILE task need to be executed to decide whether to
+                    // come here means this is DO_WHILE task and `taskReferenceName` is the last
+                    // task in
+                    // this DO_WHILE task, because DO_WHILE task need to be executed to decide
+                    // whether to
                     // schedule next iteration, so we just return the DO_WHILE task, and then ignore
                     // generating this task again in deciderService.getNextTask()
                     return this;
@@ -579,8 +638,10 @@ public class WorkflowTask {
                         return iterator.next();
                     }
                     if (found && parent != null) {
-                        return parent.next(this.taskReferenceName,
-                            parent);        //we need to return join task... -- get my sibling from my parent..
+                        return parent.next(
+                                this.taskReferenceName,
+                                parent); // we need to return join task... -- get my sibling from my
+                        // parent..
                     }
                 }
                 break;
@@ -601,6 +662,7 @@ public class WorkflowTask {
 
         switch (TaskType.of(type)) {
             case DECISION:
+            case SWITCH:
             case DO_WHILE:
             case FORK_JOIN:
                 for (List<WorkflowTask> childx : children()) {
@@ -631,7 +693,6 @@ public class WorkflowTask {
             }
         }
         return null;
-
     }
 
     @Override
@@ -648,56 +709,62 @@ public class WorkflowTask {
             return false;
         }
         WorkflowTask that = (WorkflowTask) o;
-        return getStartDelay() == that.getStartDelay() &&
-            isOptional() == that.isOptional() &&
-            Objects.equals(getName(), that.getName()) &&
-            Objects.equals(getTaskReferenceName(), that.getTaskReferenceName()) &&
-            Objects.equals(getDescription(), that.getDescription()) &&
-            Objects.equals(getInputParameters(), that.getInputParameters()) &&
-            Objects.equals(getType(), that.getType()) &&
-            Objects.equals(getDynamicTaskNameParam(), that.getDynamicTaskNameParam()) &&
-            Objects.equals(getCaseValueParam(), that.getCaseValueParam()) &&
-            Objects.equals(getCaseExpression(), that.getCaseExpression()) &&
-            Objects.equals(getDecisionCases(), that.getDecisionCases()) &&
-            Objects.equals(getDynamicForkJoinTasksParam(), that.getDynamicForkJoinTasksParam()) &&
-            Objects.equals(getDynamicForkTasksParam(), that.getDynamicForkTasksParam()) &&
-            Objects.equals(getDynamicForkTasksInputParamName(), that.getDynamicForkTasksInputParamName()) &&
-            Objects.equals(getDefaultCase(), that.getDefaultCase()) &&
-            Objects.equals(getForkTasks(), that.getForkTasks()) &&
-            Objects.equals(getSubWorkflowParam(), that.getSubWorkflowParam()) &&
-            Objects.equals(getJoinOn(), that.getJoinOn()) &&
-            Objects.equals(getSink(), that.getSink()) &&
-            Objects.equals(isAsyncComplete(), that.isAsyncComplete()) &&
-            Objects.equals(getDefaultExclusiveJoinTask(), that.getDefaultExclusiveJoinTask()) &&
-            Objects.equals(getRetryCount(), that.getRetryCount());
+        return getStartDelay() == that.getStartDelay()
+                && isOptional() == that.isOptional()
+                && Objects.equals(getName(), that.getName())
+                && Objects.equals(getTaskReferenceName(), that.getTaskReferenceName())
+                && Objects.equals(getDescription(), that.getDescription())
+                && Objects.equals(getInputParameters(), that.getInputParameters())
+                && Objects.equals(getType(), that.getType())
+                && Objects.equals(getDynamicTaskNameParam(), that.getDynamicTaskNameParam())
+                && Objects.equals(getCaseValueParam(), that.getCaseValueParam())
+                && Objects.equals(getEvaluatorType(), that.getEvaluatorType())
+                && Objects.equals(getExpression(), that.getExpression())
+                && Objects.equals(getCaseExpression(), that.getCaseExpression())
+                && Objects.equals(getDecisionCases(), that.getDecisionCases())
+                && Objects.equals(
+                        getDynamicForkJoinTasksParam(), that.getDynamicForkJoinTasksParam())
+                && Objects.equals(getDynamicForkTasksParam(), that.getDynamicForkTasksParam())
+                && Objects.equals(
+                        getDynamicForkTasksInputParamName(),
+                        that.getDynamicForkTasksInputParamName())
+                && Objects.equals(getDefaultCase(), that.getDefaultCase())
+                && Objects.equals(getForkTasks(), that.getForkTasks())
+                && Objects.equals(getSubWorkflowParam(), that.getSubWorkflowParam())
+                && Objects.equals(getJoinOn(), that.getJoinOn())
+                && Objects.equals(getSink(), that.getSink())
+                && Objects.equals(isAsyncComplete(), that.isAsyncComplete())
+                && Objects.equals(getDefaultExclusiveJoinTask(), that.getDefaultExclusiveJoinTask())
+                && Objects.equals(getRetryCount(), that.getRetryCount());
     }
 
     @Override
     public int hashCode() {
 
         return Objects.hash(
-            getName(),
-            getTaskReferenceName(),
-            getDescription(),
-            getInputParameters(),
-            getType(),
-            getDynamicTaskNameParam(),
-            getCaseValueParam(),
-            getCaseExpression(),
-            getDecisionCases(),
-            getDynamicForkJoinTasksParam(),
-            getDynamicForkTasksParam(),
-            getDynamicForkTasksInputParamName(),
-            getDefaultCase(),
-            getForkTasks(),
-            getStartDelay(),
-            getSubWorkflowParam(),
-            getJoinOn(),
-            getSink(),
-            isAsyncComplete(),
-            isOptional(),
-            getDefaultExclusiveJoinTask(),
-            getRetryCount()
-        );
+                getName(),
+                getTaskReferenceName(),
+                getDescription(),
+                getInputParameters(),
+                getType(),
+                getDynamicTaskNameParam(),
+                getCaseValueParam(),
+                getCaseExpression(),
+                getEvaluatorType(),
+                getExpression(),
+                getDecisionCases(),
+                getDynamicForkJoinTasksParam(),
+                getDynamicForkTasksParam(),
+                getDynamicForkTasksInputParamName(),
+                getDefaultCase(),
+                getForkTasks(),
+                getStartDelay(),
+                getSubWorkflowParam(),
+                getJoinOn(),
+                getSink(),
+                isAsyncComplete(),
+                isOptional(),
+                getDefaultExclusiveJoinTask(),
+                getRetryCount());
     }
 }
