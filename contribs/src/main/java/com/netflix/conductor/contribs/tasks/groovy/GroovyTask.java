@@ -36,6 +36,7 @@ public class GroovyTask extends WorkflowSystemTask {
     private static final Logger LOGGER = LoggerFactory.getLogger(GroovyTask.class);
     public static final String NAME = "GROOVY";
     private static final String SCRIPT_PARAMETER = "script";
+    private static final String DATA_PARAMETER = "data";
     private static final String OUTPUT_RESULT = "result";
     private static final String OUTPUT_RESULT_LIST = "resultList";
     private static final String OUTPUT_ERROR = "error";
@@ -48,7 +49,7 @@ public class GroovyTask extends WorkflowSystemTask {
     @Override
     public void start(WorkflowModel workflow, TaskModel task, WorkflowExecutor executor) {
         final Map<String, Object> taskInput = task.getInputData();
-
+        final Map<String,Object> data = (Map<String, Object>) taskInput.get(DATA_PARAMETER);
         final String scriptExpression = (String) taskInput.get(SCRIPT_PARAMETER);
 
         if (scriptExpression == null) {
@@ -56,28 +57,12 @@ public class GroovyTask extends WorkflowSystemTask {
             task.setStatus(TaskModel.Status.FAILED);
             return;
         }
-        Map<String, Object> arguments = null;
         try {
             GroovyShell groovyShell =
-                    new GroovyShell(this.getClass().getClassLoader(), new Binding(arguments));
+                    new GroovyShell(this.getClass().getClassLoader(), new Binding(data));
             Object result = groovyShell.evaluate(scriptExpression);
             task.setStatus(TaskModel.Status.COMPLETED);
-            if (result == null) {
-                task.addOutput(OUTPUT_RESULT, null);
-                task.addOutput(OUTPUT_RESULT_LIST, null);
-            }
-            if (result instanceof List) {
-                if (((List) result).isEmpty()) {
-                    task.addOutput(OUTPUT_RESULT, null);
-                    task.addOutput(OUTPUT_RESULT_LIST, result);
-                } else {
-                    task.addOutput(OUTPUT_RESULT, ((List) result).get(0));
-                    task.addOutput(OUTPUT_RESULT_LIST, result);
-                }
-            } else {
-                task.addOutput(OUTPUT_RESULT, result);
-                task.addOutput(OUTPUT_RESULT_LIST, Collections.singletonList(result));
-            }
+            task.addOutput(OUTPUT_RESULT, result);
         } catch (final Exception e) {
             LOGGER.error(
                     "Error executing task: {} in workflow: {}",

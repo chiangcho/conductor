@@ -17,4 +17,6 @@ dependencies {
 
     implementation "org.codehaus.groovy:groovy:${revGroovy}"
 	implementation "redis.clients:jedis:${revJedis}"
+	
+	testImplementation "org.junit.vintage:junit-vintage-engine"
 }
