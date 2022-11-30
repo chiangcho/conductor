@@ -13,7 +13,6 @@
 package com.netflix.conductor.contribs.tasks.groovy;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +48,7 @@ public class GroovyTask extends WorkflowSystemTask {
     @Override
     public void start(WorkflowModel workflow, TaskModel task, WorkflowExecutor executor) {
         final Map<String, Object> taskInput = task.getInputData();
-        final Map<String,Object> data = (Map<String, Object>) taskInput.get(DATA_PARAMETER);
+        final Map<String, Object> data = (Map<String, Object>) taskInput.get(DATA_PARAMETER);
         final String scriptExpression = (String) taskInput.get(SCRIPT_PARAMETER);
 
         if (scriptExpression == null) {

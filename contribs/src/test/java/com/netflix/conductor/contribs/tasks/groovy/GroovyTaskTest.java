@@ -12,10 +12,6 @@
  */
 package com.netflix.conductor.contribs.tasks.groovy;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -23,12 +19,16 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.netflix.conductor.model.TaskModel;
 import com.netflix.conductor.model.WorkflowModel;
 
-public class GroovyTaskTest {
+import com.fasterxml.jackson.core.JsonProcessingException;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+public class GroovyTaskTest {
 
     @Test
     public void dataShouldBeCorrectlySelected() {
@@ -38,11 +38,11 @@ public class GroovyTaskTest {
         final Map<String, Object> inputData = new HashMap<>();
         inputData.put("script", "return key[0] + key[1]");
         final Map<String, Object> data = new HashMap<>();
-        data.put("key", Arrays.asList(1,2));
+        data.put("key", Arrays.asList(1, 2));
         inputData.put("data", data);
         task.setInputData(inputData);
         task.setOutputData(new HashMap<>());
-        
+
         GroovyTask.start(workflow, task, null);
 
         assertNull(task.getOutputData().get("error"));
@@ -51,7 +51,7 @@ public class GroovyTaskTest {
 
     @Test
     public void simpleErrorShouldBeDisplayed() {
-    	final GroovyTask GroovyTask = new GroovyTask();
+        final GroovyTask GroovyTask = new GroovyTask();
         final WorkflowModel workflow = new WorkflowModel();
         final TaskModel task = new TaskModel();
         final Map<String, Object> inputData = new HashMap<>();
@@ -66,10 +66,9 @@ public class GroovyTaskTest {
                         .startsWith("No such property: return1 for class: Script1"));
     }
 
-
     @Test
     public void mapResultShouldBeCorrectlyExtracted() {
-    	final GroovyTask GroovyTask = new GroovyTask();
+        final GroovyTask GroovyTask = new GroovyTask();
         final WorkflowModel workflow = new WorkflowModel();
         final TaskModel task = new TaskModel();
         final Map<String, Object> inputData = new HashMap<>();
@@ -88,7 +87,7 @@ public class GroovyTaskTest {
 
     @Test
     public void stringResultShouldBeCorrectlyExtracted() {
-    	final GroovyTask GroovyTask = new GroovyTask();
+        final GroovyTask GroovyTask = new GroovyTask();
         final WorkflowModel workflow = new WorkflowModel();
         final TaskModel task = new TaskModel();
         final Map<String, Object> inputData = new HashMap<>();
@@ -107,7 +106,7 @@ public class GroovyTaskTest {
     @SuppressWarnings("unchecked")
     @Test
     public void listResultShouldBeCorrectlyExtracted() throws JsonProcessingException {
-    	final GroovyTask GroovyTask = new GroovyTask();
+        final GroovyTask GroovyTask = new GroovyTask();
         final WorkflowModel workflow = new WorkflowModel();
         final TaskModel task = new TaskModel();
         final Map<String, Object> inputData = new HashMap<>();
@@ -125,7 +124,7 @@ public class GroovyTaskTest {
 
     @Test
     public void nullResultShouldBeCorrectlyExtracted() throws JsonProcessingException {
-    	final GroovyTask GroovyTask = new GroovyTask();
+        final GroovyTask GroovyTask = new GroovyTask();
         final WorkflowModel workflow = new WorkflowModel();
         final TaskModel task = new TaskModel();
         final Map<String, Object> inputData = new HashMap<>();
