@@ -16,7 +16,7 @@ dependencies {
     implementation project(':conductor-common')
     compileOnly 'org.springframework.boot:spring-boot-starter'
     compileOnly 'org.springframework.boot:spring-boot-starter-validation'
-    compileOnly 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework.retry:spring-retry'
 
     implementation "com.fasterxml.jackson.core:jackson-annotations"
     implementation "com.fasterxml.jackson.core:jackson-databind"

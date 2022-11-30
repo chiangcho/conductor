@@ -195,6 +195,12 @@
         },
         "org.springframework.boot:spring-boot-starter-web": {
             "locked": "2.7.3"
+        },
+        "org.springframework.retry:spring-retry": {
+            "firstLevelTransitive": [
+                "com.netflix.conductor:conductor-core"
+            ],
+            "locked": "1.3.3"
         }
     },
     "testCompileClasspath": {
@@ -412,6 +418,12 @@
         },
         "org.springframework.boot:spring-boot-starter-web": {
             "locked": "2.7.3"
+        },
+        "org.springframework.retry:spring-retry": {
+            "firstLevelTransitive": [
+                "com.netflix.conductor:conductor-core"
+            ],
+            "locked": "1.3.3"
         }
     }
 }

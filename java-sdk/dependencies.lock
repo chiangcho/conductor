@@ -234,7 +234,7 @@
             "locked": "2.17.1"
         },
         "org.codehaus.groovy:groovy-all": {
-            "locked": "2.5.13"
+            "locked": "3.0.13"
         },
         "org.glassfish.jersey.core:jersey-common": {
             "locked": "2.22.2"
@@ -243,10 +243,10 @@
             "locked": "5.8.2"
         },
         "org.spockframework:spock-core": {
-            "locked": "1.3-groovy-2.5"
+            "locked": "2.0-groovy-3.0"
         },
         "org.spockframework:spock-spring": {
-            "locked": "1.3-groovy-2.5"
+            "locked": "2.0-groovy-3.0"
         },
         "org.springframework.boot:spring-boot-starter-log4j2": {
             "locked": "2.7.3"
@@ -406,7 +406,7 @@
             "locked": "2.17.1"
         },
         "org.codehaus.groovy:groovy-all": {
-            "locked": "2.5.13"
+            "locked": "3.0.13"
         },
         "org.glassfish.jersey.core:jersey-common": {
             "locked": "2.22.2"
@@ -421,10 +421,10 @@
             "locked": "1.7.36"
         },
         "org.spockframework:spock-core": {
-            "locked": "1.3-groovy-2.5"
+            "locked": "2.0-groovy-3.0"
         },
         "org.spockframework:spock-spring": {
-            "locked": "1.3-groovy-2.5"
+            "locked": "2.0-groovy-3.0"
         },
         "org.springframework.boot:spring-boot-starter-log4j2": {
             "locked": "2.7.3"

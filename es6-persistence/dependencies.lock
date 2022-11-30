@@ -213,6 +213,12 @@
         },
         "org.elasticsearch.client:transport": {
             "locked": "6.8.12"
+        },
+        "org.springframework.retry:spring-retry": {
+            "firstLevelTransitive": [
+                "com.netflix.conductor:conductor-core"
+            ],
+            "locked": "1.3.3"
         }
     },
     "testCompileClasspath": {
@@ -456,6 +462,9 @@
             "locked": "2.7.3"
         },
         "org.springframework.retry:spring-retry": {
+            "firstLevelTransitive": [
+                "com.netflix.conductor:conductor-core"
+            ],
             "locked": "1.3.3"
         },
         "org.testcontainers:elasticsearch": {
