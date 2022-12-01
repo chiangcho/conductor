@@ -181,17 +181,17 @@ configure(allprojects - project(':conductor-grpc')) {
             googleJavaFormat().aosp()
             removeUnusedImports()
             importOrder('java', 'javax', 'org', 'com.netflix', '', '\\#com.netflix', '\\#')
-            licenseHeaderFile("$rootDir/licenseheader.txt")
+            //licenseHeaderFile("$rootDir/licenseheader.txt")
         }
     }
 }
 
-['cassandra-persistence', 'core', 'redis-concurrency-limit', 'test-harness', 'client'].each {
+['mysql-persistence', 'core', 'redis-concurrency-limit', 'test-harness', 'client'].each {
     configure(project(":conductor-$it")) {
         spotless {
             groovy {
-                importOrder('java', 'javax', 'org', 'com.netflix', '', '\\#com.netflix', '\\#')
-                licenseHeaderFile("$rootDir/licenseheader.txt")
+                //importOrder('java', 'javax', 'org', 'com.netflix', '', '\\#com.netflix', '\\#')
+                //licenseHeaderFile("$rootDir/licenseheader.txt")
             }
         }
     }
