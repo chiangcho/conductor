@@ -19,8 +19,7 @@ dependencies {
 
     implementation project(':conductor-rest')
     implementation project(':conductor-core')
-    implementation project(':conductor-redis-persistence')
-    implementation project(':conductor-cassandra-persistence')
+    implementation project(':conductor-mysql-persistence')
     implementation project(':conductor-es6-persistence')
     implementation project(':conductor-grpc-server')
     implementation project(':conductor-redis-lock')
@@ -28,8 +27,6 @@ dependencies {
     implementation project(':conductor-http-task')
     implementation project(':conductor-json-jq-task')
     implementation project(':conductor-contribs')    
-    implementation project(':conductor-awss3-storage')
-    implementation project(':conductor-awssqs-event-queue')
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -44,7 +41,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     implementation "org.springdoc:springdoc-openapi-ui:${revOpenapi}"
-
+	implementation "org.flywaydb:flyway-core:7.15.0"
     runtimeOnly "org.glassfish.jaxb:jaxb-runtime:${revJAXB}"
 	implementation 'org.springframework.retry:spring-retry'
     testImplementation project(':conductor-rest')
