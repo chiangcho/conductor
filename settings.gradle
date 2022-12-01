@@ -45,8 +45,6 @@ include 'es6-persistence'
 
 include 'redis-lock'
 
-include 'redis-concurrency-limit'
-
 include 'json-jq-task'
 include 'http-task'
 include 'contribs'

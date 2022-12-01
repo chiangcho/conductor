@@ -23,7 +23,6 @@ dependencies {
     implementation project(':conductor-es6-persistence')
     implementation project(':conductor-grpc-server')
     implementation project(':conductor-redis-lock')
-    implementation project(':conductor-redis-concurrency-limit')
     implementation project(':conductor-http-task')
     implementation project(':conductor-json-jq-task')
     implementation project(':conductor-contribs')    
