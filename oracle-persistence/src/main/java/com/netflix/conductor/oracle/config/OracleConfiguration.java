@@ -47,14 +47,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @ConditionalOnProperty(name = "conductor.db.type", havingValue = "oracle")
 // Import the DataSourceAutoConfiguration when oracle database is selected.
 // By default the datasource configuration is excluded in the main module.
-@Import({DataSourceAutoConfiguration.class, FlywayAutoConfiguration.class})
+@Import({DataSourceAutoConfiguration.class})
 public class OracleConfiguration {
     private static final String ER_LOCK_DEADLOCK = "ORA-00060";
     private static final String ER_SERIALIZATION_FAILURE = "ORA-08177";
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Bean
-    @DependsOn({"flyway"})
+//    @DependsOn({"flyway"})
     public MetadataDAO oracleMetadataDAO(
             ObjectMapper objectMapper,
             DataSource dataSource,
@@ -65,7 +65,7 @@ public class OracleConfiguration {
     }
 
     @Bean
-    @DependsOn({"flyway"})
+//    @DependsOn({"flyway"})
     public ExecutionDAO oracleExecutionDAO(
             ObjectMapper objectMapper,
             DataSource dataSource,
@@ -75,7 +75,7 @@ public class OracleConfiguration {
     }
 
     @Bean
-    @DependsOn({"flyway"})
+//    @DependsOn({"flyway"})
     public QueueDAO oracleQueueDAO(
             ObjectMapper objectMapper,
             DataSource dataSource,
