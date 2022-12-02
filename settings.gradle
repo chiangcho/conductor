@@ -39,7 +39,7 @@ include 'client'
 include 'client-spring'
 
 include 'mysql-persistence'
-include 'redis-persistence'
+include 'oracle-persistence'
 
 include 'es6-persistence'
 
