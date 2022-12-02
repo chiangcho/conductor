@@ -35,18 +35,13 @@ import com.netflix.conductor.common.config.TestObjectMapperConfiguration;
 import com.netflix.conductor.common.metadata.events.EventHandler;
 import com.netflix.conductor.common.metadata.tasks.TaskDef;
 import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
-import com.netflix.conductor.core.exception.ApplicationException;
+import com.netflix.conductor.core.exception.NonTransientException;
 import com.netflix.conductor.oracle.config.OracleProperties;
 import com.netflix.conductor.oracle.config.OracleTestConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zaxxer.hikari.HikariDataSource;
 
-import static com.netflix.conductor.core.exception.ApplicationException.Code.CONFLICT;
-import static com.netflix.conductor.core.exception.ApplicationException.Code.NOT_FOUND;
-
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -79,9 +74,8 @@ public class OracleMetadataDAOTest {
 
     @Test
     public void testDuplicateWorkflowDef() {
-        thrown.expect(ApplicationException.class);
+        thrown.expect(NonTransientException.class);
         thrown.expectMessage("Workflow with testDuplicate.1 already exists!");
-        thrown.expect(hasProperty("code", is(CONFLICT)));
 
         WorkflowDef def = new WorkflowDef();
         def.setName("testDuplicate");
@@ -93,9 +87,8 @@ public class OracleMetadataDAOTest {
 
     @Test
     public void testRemoveNotExistingWorkflowDef() {
-        thrown.expect(ApplicationException.class);
+        thrown.expect(NonTransientException.class);
         thrown.expectMessage("No such workflow definition: test version: 1");
-        thrown.expect(hasProperty("code", is(NOT_FOUND)));
 
         metadataDAO.removeWorkflowDef("test", 1);
     }
@@ -240,9 +233,8 @@ public class OracleMetadataDAOTest {
 
     @Test
     public void testRemoveNotExistingTaskDef() {
-        thrown.expect(ApplicationException.class);
+        thrown.expect(NonTransientException.class);
         thrown.expectMessage("No such task definition");
-        thrown.expect(hasProperty("code", is(NOT_FOUND)));
 
         metadataDAO.removeTaskDef("test" + UUID.randomUUID().toString());
     }

@@ -147,7 +147,7 @@ public abstract class OracleBaseDAO {
         try {
             return retryTemplate.execute(context -> getWithTransaction(function));
         } catch (RuntimeException e) {
-            throw (NonTransientException) e.getCause();
+            throw new NonTransientException(e.getMessage(), e);
         }
     }
 
