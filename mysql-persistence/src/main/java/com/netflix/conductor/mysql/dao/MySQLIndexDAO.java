@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.conductor.annotations.Trace;
 import com.netflix.conductor.common.metadata.events.EventExecution;
 import com.netflix.conductor.common.metadata.tasks.TaskExecLog;
@@ -36,15 +35,17 @@ import com.netflix.conductor.common.run.WorkflowSummary;
 import com.netflix.conductor.core.events.queue.Message;
 import com.netflix.conductor.dao.IndexDAO;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Trace
 public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
 
-    protected MySQLIndexDAO(RetryTemplate retryTemplate, ObjectMapper objectMapper, DataSource dataSource) {
-		super(retryTemplate, objectMapper, dataSource);
-	}
+    protected MySQLIndexDAO(
+            RetryTemplate retryTemplate, ObjectMapper objectMapper, DataSource dataSource) {
+        super(retryTemplate, objectMapper, dataSource);
+    }
 
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(MySQLIndexDAO.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MySQLIndexDAO.class);
 
     private static final String WORKFLOW_DOC_TYPE = "workflow";
     private static final String TASK_DOC_TYPE = "task";
@@ -58,11 +59,9 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
     private ExecutorService executorService;
     private ExecutorService logExecutorService;
 
-
     static {
         SIMPLE_DATE_FORMAT.setTimeZone(GMT);
     }
-
 
     @PreDestroy
     private void shutdown() {
@@ -88,12 +87,8 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
         }
     }
 
-    
-
     @Override
-    public void indexWorkflow(WorkflowSummary workflow) {
-        
-    }
+    public void indexWorkflow(WorkflowSummary workflow) {}
 
     @Override
     public CompletableFuture<Void> asyncIndexWorkflow(WorkflowSummary workflow) {
@@ -101,9 +96,7 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
     }
 
     @Override
-    public void indexTask(TaskSummary task) {
-        
-    }
+    public void indexTask(TaskSummary task) {}
 
     @Override
     public CompletableFuture<Void> asyncIndexTask(TaskSummary task) {
@@ -111,9 +104,7 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
     }
 
     @Override
-    public void addTaskExecutionLogs(List<TaskExecLog> taskExecLogs) {
-
-    }
+    public void addTaskExecutionLogs(List<TaskExecLog> taskExecLogs) {}
 
     @Override
     public CompletableFuture<Void> asyncAddTaskExecutionLogs(List<TaskExecLog> logs) {
@@ -122,27 +113,21 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
 
     @Override
     public List<TaskExecLog> getTaskExecutionLogs(String taskId) {
-    	return null;
+        return null;
     }
-
 
     @Override
     public List<Message> getMessages(String queue) {
-    	return null;
+        return null;
     }
-
 
     @Override
     public List<EventExecution> getEventExecutions(String event) {
         return null;
     }
 
-
-
     @Override
-    public void addMessage(String queue, Message message) {
-        
-    }
+    public void addMessage(String queue, Message message) {}
 
     @Override
     public CompletableFuture<Void> asyncAddMessage(String queue, Message message) {
@@ -150,9 +135,7 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
     }
 
     @Override
-    public void addEventExecution(EventExecution eventExecution) {
-        
-    }
+    public void addEventExecution(EventExecution eventExecution) {}
 
     @Override
     public CompletableFuture<Void> asyncAddEventExecution(EventExecution eventExecution) {
@@ -161,14 +144,13 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
     }
 
     /**
-     * String query =
-                    "correlationId='" + correlationId + "' AND workflowType='" + workflowName + "'";
-       String freeText = "*";
+     * String query = "correlationId='" + correlationId + "' AND workflowType='" + workflowName +
+     * "'"; String freeText = "*";
      */
     @Override
     public SearchResult<String> searchWorkflows(
             String query, String freeText, int start, int count, List<String> sort) {
-    	return null;
+        return null;
     }
 
     @Override
@@ -190,9 +172,7 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
     }
 
     @Override
-    public void removeWorkflow(String workflowId) {
-        
-    }
+    public void removeWorkflow(String workflowId) {}
 
     @Override
     public CompletableFuture<Void> asyncRemoveWorkflow(String workflowId) {
@@ -200,9 +180,7 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
     }
 
     @Override
-    public void updateWorkflow(String workflowInstanceId, String[] keys, Object[] values) {
-        
-    }
+    public void updateWorkflow(String workflowInstanceId, String[] keys, Object[] values) {}
 
     @Override
     public CompletableFuture<Void> asyncUpdateWorkflow(
@@ -216,7 +194,6 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
         return null;
     }
 
-
     @Override
     public List<String> searchArchivableWorkflows(String indexName, long archiveTtlDays) {
         return null;
@@ -224,13 +201,12 @@ public class MySQLIndexDAO extends MySQLBaseDAO implements IndexDAO {
 
     @Override
     public long getWorkflowCount(String query, String freeText) {
-    	return 0;
+        return 0;
     }
 
+    @Override
+    public void setup() throws Exception {
+        // TODO Auto-generated method stub
 
-	@Override
-	public void setup() throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
+    }
 }
