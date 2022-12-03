@@ -50,7 +50,8 @@ public class WorkflowResource {
     private final WorkflowService workflowService;
     private final ExecutionLockService executionLockService;
 
-    public WorkflowResource(WorkflowService workflowService, ExecutionLockService executionLockService) {
+    public WorkflowResource(
+            WorkflowService workflowService, ExecutionLockService executionLockService) {
         this.workflowService = workflowService;
         this.executionLockService = executionLockService;
     }
@@ -70,12 +71,11 @@ public class WorkflowResource {
     public Workflow startWorkflowSync(@RequestBody StartWorkflowRequest request) {
         String workflowId = workflowService.startWorkflow(request);
         try {
-                executionLockService.acquireLock(workflowId, 60*1000);
-                return workflowService.getExecutionStatus(workflowId, true);
+            executionLockService.acquireLock(workflowId, 60 * 1000);
+            return workflowService.getExecutionStatus(workflowId, true);
         } finally {
-                executionLockService.releaseLock(workflowId);
+            executionLockService.releaseLock(workflowId);
         }
-        
     }
 
     @PostMapping(value = "/{name}", produces = TEXT_PLAIN_VALUE)
@@ -90,7 +90,7 @@ public class WorkflowResource {
             @RequestBody Map<String, Object> input) {
         return workflowService.startWorkflow(name, version, correlationId, priority, input);
     }
-    
+
     @GetMapping("/{name}/correlated/{correlationId}")
     @Operation(summary = "Lists workflows for the given correlation id")
     public List<Workflow> getWorkflows(
