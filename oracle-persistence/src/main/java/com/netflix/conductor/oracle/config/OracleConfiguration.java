@@ -21,12 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.retry.RetryContext;
 import org.springframework.retry.backoff.NoBackOffPolicy;
@@ -54,7 +52,7 @@ public class OracleConfiguration {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Bean
-//    @DependsOn({"flyway"})
+    //    @DependsOn({"flyway"})
     public MetadataDAO oracleMetadataDAO(
             ObjectMapper objectMapper,
             DataSource dataSource,
@@ -65,7 +63,7 @@ public class OracleConfiguration {
     }
 
     @Bean
-//    @DependsOn({"flyway"})
+    //    @DependsOn({"flyway"})
     public ExecutionDAO oracleExecutionDAO(
             ObjectMapper objectMapper,
             DataSource dataSource,
@@ -75,7 +73,7 @@ public class OracleConfiguration {
     }
 
     @Bean
-//    @DependsOn({"flyway"})
+    //    @DependsOn({"flyway"})
     public QueueDAO oracleQueueDAO(
             ObjectMapper objectMapper,
             DataSource dataSource,
