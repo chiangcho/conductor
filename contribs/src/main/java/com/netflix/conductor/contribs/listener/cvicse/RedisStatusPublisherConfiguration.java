@@ -12,15 +12,12 @@
  */
 package com.netflix.conductor.contribs.listener.cvicse;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.netflix.conductor.contribs.service.ComputeService;
 import com.netflix.conductor.core.listener.WorkflowStatusListener;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import redis.clients.jedis.commands.JedisCommands;
 
 @Configuration
 @ConditionalOnProperty(
@@ -29,9 +26,7 @@ import redis.clients.jedis.commands.JedisCommands;
 public class RedisStatusPublisherConfiguration {
 
     @Bean
-    public WorkflowStatusListener getRedisStatusPublisher(
-            @Qualifier("DefaultJedisCommands") JedisCommands jedisCommands,
-            ObjectMapper objectMapper) {
-        return new RedisStatusPublisher(jedisCommands, objectMapper);
+    public WorkflowStatusListener getRedisStatusPublisher(ComputeService computeService) {
+        return new RedisStatusPublisher(computeService);
     }
 }
