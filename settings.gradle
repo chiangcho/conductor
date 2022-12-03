@@ -35,26 +35,15 @@ include 'annotations-processor'
 include 'server'
 include 'common'
 include 'core'
-include 'client'
-include 'client-spring'
 
 include 'mysql-persistence'
 include 'oracle-persistence'
-
-include 'es6-persistence'
-
-include 'redis-lock'
 
 include 'json-jq-task'
 include 'http-task'
 include 'contribs'
 
 include 'rest'
-include 'grpc'
-include 'grpc-server'
-include 'grpc-client'
-
-include 'java-sdk'
 
 include 'test-harness'
 
