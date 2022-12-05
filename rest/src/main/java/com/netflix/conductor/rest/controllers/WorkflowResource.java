@@ -34,7 +34,6 @@ import com.netflix.conductor.common.run.ExternalStorageLocation;
 import com.netflix.conductor.common.run.SearchResult;
 import com.netflix.conductor.common.run.Workflow;
 import com.netflix.conductor.common.run.WorkflowSummary;
-import com.netflix.conductor.service.ExecutionLockService;
 import com.netflix.conductor.service.WorkflowService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,12 +47,9 @@ import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 public class WorkflowResource {
 
     private final WorkflowService workflowService;
-    private final ExecutionLockService executionLockService;
 
-    public WorkflowResource(
-            WorkflowService workflowService, ExecutionLockService executionLockService) {
+    public WorkflowResource(WorkflowService workflowService) {
         this.workflowService = workflowService;
-        this.executionLockService = executionLockService;
     }
 
     @PostMapping(produces = TEXT_PLAIN_VALUE)
@@ -62,20 +58,6 @@ public class WorkflowResource {
                     "Start a new workflow with StartWorkflowRequest, which allows task to be executed in a domain")
     public String startWorkflow(@RequestBody StartWorkflowRequest request) {
         return workflowService.startWorkflow(request);
-    }
-
-    @PostMapping(value = "/{sync}", produces = TEXT_PLAIN_VALUE)
-    @Operation(
-            summary =
-                    "Start a new workflow with StartWorkflowRequest, which allows task to be executed in a domain")
-    public Workflow startWorkflowSync(@RequestBody StartWorkflowRequest request) {
-        String workflowId = workflowService.startWorkflow(request);
-        try {
-            executionLockService.acquireLock(workflowId, 60 * 1000);
-            return workflowService.getExecutionStatus(workflowId, true);
-        } finally {
-            executionLockService.releaseLock(workflowId);
-        }
     }
 
     @PostMapping(value = "/{name}", produces = TEXT_PLAIN_VALUE)
