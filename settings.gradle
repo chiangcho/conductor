@@ -45,6 +45,4 @@ include 'contribs'
 
 include 'rest'
 
-include 'test-harness'
-
 rootProject.children.each {it.name="conductor-${it.name}"}

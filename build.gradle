@@ -187,7 +187,7 @@ configure(allprojects) {
     }
 }
 
-['mysql-persistence', 'core', 'test-harness'].each {
+['mysql-persistence', 'core'].each {
     configure(project(":conductor-$it")) {
         spotless {
             groovy {
