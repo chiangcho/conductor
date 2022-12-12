@@ -31,7 +31,7 @@ import org.springframework.web.client.RestTemplate;
 // In case that SQL database is selected this class will be imported back in the appropriate
 // database persistence module.
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, FlywayAutoConfiguration.class})
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
 public class Conductor {
 

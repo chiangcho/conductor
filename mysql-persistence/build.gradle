@@ -17,6 +17,7 @@ dependencies {
     implementation "mysql:mysql-connector-java"
     implementation "org.springframework.boot:spring-boot-starter-jdbc"
     implementation "org.flywaydb:flyway-core:7.15.0"
+	implementation 'com.github.drinkjava2:jdialects:5.0.13.jre8'
 
     testImplementation "org.codehaus.groovy:groovy-all:${revGroovy}"
 
