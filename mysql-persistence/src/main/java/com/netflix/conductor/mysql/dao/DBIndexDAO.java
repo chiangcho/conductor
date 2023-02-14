@@ -39,6 +39,7 @@ import org.springframework.util.CollectionUtils;
 import com.github.drinkjava2.jdialects.Dialect;
 import com.google.common.base.CaseFormat;
 import com.netflix.conductor.common.metadata.events.EventExecution;
+import com.netflix.conductor.common.metadata.tasks.Task.Status;
 import com.netflix.conductor.common.metadata.tasks.TaskExecLog;
 import com.netflix.conductor.common.run.SearchResult;
 import com.netflix.conductor.common.run.TaskSummary;
@@ -139,7 +140,7 @@ public class DBIndexDAO implements IndexDAO {
     	jdbcTemplate.update(insertWorkflowSql,workflow.getWorkflowId(),workflow.getCorrelationId(),
     			workflow.getWorkflowType(),workflow.getVersion(),workflow.getReasonForIncompletion(), status, 
     			"{\"input\":" + workflow.getInput() + ",\"output\":" + workflow.getOutput() + "}",
-    			workflow.getExecutionTime(), startTimeTp,updateTimeTp,endTimeTp);
+    			workflow.getExecutionTime(), startTimeTp,endTimeTp,updateTimeTp);
     }
 
     private Timestamp convertTimestamp(String dateTime) {
@@ -171,7 +172,9 @@ public class DBIndexDAO implements IndexDAO {
     	Timestamp updateTimeTp = convertTimestamp(task.getUpdateTime());
     	Timestamp endTimeTp = convertTimestamp(task.getEndTime());
     	String status = task.getStatus().toString();
-    	
+    	if(task.getStatus().equals(Status.IN_PROGRESS)) {
+    		endTimeTp = null;
+    	}
     	String insertWorkflowSql = "insert into index_task (task_id, workflow_id, correlation_id, workflow_type, workflow_priority, task_def_name, task_type"
     			+ ", domain, execution_time, queue_wait_time, reason_for_incompletion, status, json_data, scheduled_time, start_time, end_time, update_time)" 
     				+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -179,7 +182,7 @@ public class DBIndexDAO implements IndexDAO {
     			task.getWorkflowType(), task.getWorkflowPriority(), task.getTaskDefName(), task.getTaskType(),task.getDomain(),
     			task.getExecutionTime(), task.getQueueWaitTime(),  task.getReasonForIncompletion(), status, 
     			"{\"input\":" + task.getInput() + ",\"output\":" + task.getOutput() + "}",
-    			scheduledTimeTp, startTimeTp, updateTimeTp, endTimeTp);
+    			scheduledTimeTp, startTimeTp, endTimeTp, updateTimeTp);
     	
     }
 
