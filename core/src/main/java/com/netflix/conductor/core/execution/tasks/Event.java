@@ -12,8 +12,8 @@
  */
 package com.netflix.conductor.core.execution.tasks;
 
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -86,7 +86,7 @@ public class Event extends WorkflowSystemTask {
             String queueName = (String) task.getOutputData().get(EVENT_PRODUCED);
             ObservableQueue queue = getQueue(queueName, task.getTaskId());
             Message message = getPopulatedMessage(task);
-            queue.publish(List.of(message));
+            queue.publish(Arrays.asList(message));
             LOGGER.debug("Published message:{} to queue:{}", message.getId(), queue.getName());
             if (!isAsyncComplete(task)) {
                 task.setStatus(TaskModel.Status.COMPLETED);
@@ -116,7 +116,7 @@ public class Event extends WorkflowSystemTask {
         Message message = new Message(task.getTaskId(), null, task.getTaskId());
         String queueName = computeQueueName(workflow, task);
         ObservableQueue queue = getQueue(queueName, task.getTaskId());
-        queue.ack(List.of(message));
+        queue.ack(Arrays.asList(message));
     }
 
     @VisibleForTesting

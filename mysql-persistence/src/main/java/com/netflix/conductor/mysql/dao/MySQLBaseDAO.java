@@ -27,17 +27,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.retry.support.RetryTemplate;
 
 import com.netflix.conductor.core.exception.NonTransientException;
-import com.netflix.conductor.mysql.util.*;
+import com.netflix.conductor.mysql.util.ExecuteFunction;
+import com.netflix.conductor.mysql.util.LazyToString;
+import com.netflix.conductor.mysql.util.Query;
+import com.netflix.conductor.mysql.util.QueryFunction;
+import com.netflix.conductor.mysql.util.TransactionalFunction;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 
 public abstract class MySQLBaseDAO {
 
     private static final List<String> EXCLUDED_STACKTRACE_CLASS =
-            ImmutableList.of(MySQLBaseDAO.class.getName(), Thread.class.getName());
+            Arrays.asList(MySQLBaseDAO.class.getName(), Thread.class.getName());
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected final ObjectMapper objectMapper;

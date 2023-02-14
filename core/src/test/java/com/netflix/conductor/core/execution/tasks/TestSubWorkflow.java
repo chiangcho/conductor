@@ -231,7 +231,7 @@ public class TestSubWorkflow {
         WorkflowModel workflowInstance = new WorkflowModel();
         workflowInstance.setWorkflowDefinition(workflowDef);
         Map<String, String> taskToDomain =
-                new HashMap<>() {
+                new HashMap<String, String>() {
                     {
                         put("*", "unittest");
                     }
@@ -290,7 +290,7 @@ public class TestSubWorkflow {
         WorkflowModel subWorkflowInstance = new WorkflowModel();
         workflowInstance.setWorkflowDefinition(workflowDef);
         Map<String, String> taskToDomain =
-                new HashMap<>() {
+                new HashMap<String, String>() {
                     {
                         put("*", "unittest");
                     }

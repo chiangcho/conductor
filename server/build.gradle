@@ -41,7 +41,6 @@ dependencies {
 
     implementation "org.springdoc:springdoc-openapi-ui:${revOpenapi}"
 	implementation "org.flywaydb:flyway-core:7.15.0"
-    runtimeOnly "org.glassfish.jaxb:jaxb-runtime:${revJAXB}"
 	implementation 'org.springframework.retry:spring-retry'
     testImplementation project(':conductor-rest')
     testImplementation project(':conductor-common')

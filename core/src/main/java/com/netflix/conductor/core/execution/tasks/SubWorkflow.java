@@ -68,7 +68,7 @@ public class SubWorkflow extends WorkflowSystemTask {
             taskToDomain = (Map<String, String>) input.get("subWorkflowTaskToDomain");
         }
 
-        var wfInput = (Map<String, Object>) input.get("workflowInput");
+        Map<String, Object> wfInput = (Map<String, Object>) input.get("workflowInput");
         if (wfInput == null || wfInput.isEmpty()) {
             wfInput = input;
         }

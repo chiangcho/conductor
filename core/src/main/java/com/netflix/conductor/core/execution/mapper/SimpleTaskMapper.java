@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -97,6 +98,6 @@ public class SimpleTaskMapper implements TaskMapper {
         simpleTask.setRetriedTaskId(retriedTaskId);
         simpleTask.setRateLimitPerFrequency(taskDefinition.getRateLimitPerFrequency());
         simpleTask.setRateLimitFrequencyInSeconds(taskDefinition.getRateLimitFrequencyInSeconds());
-        return List.of(simpleTask);
+        return Arrays.asList(simpleTask);
     }
 }

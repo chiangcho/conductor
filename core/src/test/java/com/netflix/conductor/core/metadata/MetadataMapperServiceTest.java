@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.metadata;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -88,7 +89,7 @@ public class MetadataMapperServiceTest {
         when(metadataDAO.getTaskDef(nameTaskDefinition)).thenReturn(taskDefinition);
 
         WorkflowDef workflowDefinition = createWorkflowDefinition("testMetadataPopulation");
-        workflowDefinition.setTasks(List.of(workflowTask));
+        workflowDefinition.setTasks(Arrays.asList(workflowTask));
 
         metadataMapperService.populateTaskDefinitions(workflowDefinition);
 
@@ -106,7 +107,7 @@ public class MetadataMapperServiceTest {
         workflowTask.setTaskDefinition(taskDefinition);
 
         WorkflowDef workflowDefinition = createWorkflowDefinition("testMetadataPopulation");
-        workflowDefinition.setTasks(List.of(workflowTask));
+        workflowDefinition.setTasks(Arrays.asList(workflowTask));
 
         metadataMapperService.populateTaskDefinitions(workflowDefinition);
 
@@ -127,7 +128,7 @@ public class MetadataMapperServiceTest {
         WorkflowTask workflowTask2 = createWorkflowTask(nameTaskDefinition2);
 
         WorkflowDef workflowDefinition = createWorkflowDefinition("testMetadataPopulation");
-        workflowDefinition.setTasks(List.of(workflowTask1, workflowTask2));
+        workflowDefinition.setTasks(Arrays.asList(workflowTask1, workflowTask2));
 
         when(metadataDAO.getTaskDef(nameTaskDefinition2)).thenReturn(taskDefinition);
 
@@ -153,7 +154,7 @@ public class MetadataMapperServiceTest {
         TaskDef taskDefinition = createTaskDefinition(nameTaskDefinition1);
 
         WorkflowDef workflowDefinition = createWorkflowDefinition("testMetadataPopulation");
-        workflowDefinition.setTasks(List.of(workflowTask1, workflowTask2));
+        workflowDefinition.setTasks(Arrays.asList(workflowTask1, workflowTask2));
 
         when(metadataDAO.getTaskDef(nameTaskDefinition1)).thenReturn(taskDefinition);
         when(metadataDAO.getTaskDef(nameTaskDefinition2)).thenReturn(null);
@@ -181,7 +182,7 @@ public class MetadataMapperServiceTest {
         workflowTask.setSubWorkflowParam(subWorkflowParams);
 
         WorkflowDef workflowDefinition = createWorkflowDefinition("testMetadataPopulation");
-        workflowDefinition.setTasks(List.of(workflowTask));
+        workflowDefinition.setTasks(Arrays.asList(workflowTask));
 
         when(metadataDAO.getLatestWorkflowDef(workflowDefinitionName))
                 .thenReturn(Optional.of(subWorkflowDefinition));
@@ -214,7 +215,7 @@ public class MetadataMapperServiceTest {
         workflowTask.setSubWorkflowParam(subWorkflowParams);
 
         WorkflowDef workflowDefinition = createWorkflowDefinition("testMetadataPopulation");
-        workflowDefinition.setTasks(List.of(workflowTask));
+        workflowDefinition.setTasks(Arrays.asList(workflowTask));
 
         metadataMapperService.populateTaskDefinitions(workflowDefinition);
 
@@ -241,7 +242,7 @@ public class MetadataMapperServiceTest {
         workflowTask.setSubWorkflowParam(subWorkflowParams);
 
         WorkflowDef workflowDefinition = createWorkflowDefinition("testMetadataPopulation");
-        workflowDefinition.setTasks(List.of(workflowTask));
+        workflowDefinition.setTasks(Arrays.asList(workflowTask));
 
         when(metadataDAO.getLatestWorkflowDef(workflowDefinitionName)).thenReturn(Optional.empty());
 
@@ -299,7 +300,7 @@ public class MetadataMapperServiceTest {
         when(metadataDAO.getTaskDef(nameTaskDefinition)).thenReturn(null);
 
         WorkflowDef workflowDefinition = createWorkflowDefinition("testMetadataPopulation");
-        workflowDefinition.setTasks(List.of(workflowTask));
+        workflowDefinition.setTasks(Arrays.asList(workflowTask));
 
         metadataMapperService.populateTaskDefinitions(workflowDefinition);
 

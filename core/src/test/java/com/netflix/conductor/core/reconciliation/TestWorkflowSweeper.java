@@ -13,7 +13,7 @@
 package com.netflix.conductor.core.reconciliation;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -65,7 +65,7 @@ public class TestWorkflowSweeper {
         taskModel.setTaskId("task1");
         taskModel.setTaskType(TaskType.TASK_TYPE_WAIT);
         taskModel.setStatus(Status.IN_PROGRESS);
-        workflowModel.setTasks(List.of(taskModel));
+        workflowModel.setTasks(Arrays.asList(taskModel));
         when(properties.getWorkflowOffsetTimeout())
                 .thenReturn(Duration.ofSeconds(defaultPostPoneOffSetSeconds));
         workflowSweeper.unack(workflowModel, defaultPostPoneOffSetSeconds);
@@ -86,7 +86,7 @@ public class TestWorkflowSweeper {
         taskModel.setTaskType(TaskType.TASK_TYPE_WAIT);
         taskModel.setStatus(Status.IN_PROGRESS);
         taskModel.setWaitTimeout(waitTimeout);
-        workflowModel.setTasks(List.of(taskModel));
+        workflowModel.setTasks(Arrays.asList(taskModel));
         when(properties.getWorkflowOffsetTimeout())
                 .thenReturn(Duration.ofSeconds(defaultPostPoneOffSetSeconds));
         workflowSweeper.unack(workflowModel, defaultPostPoneOffSetSeconds);
@@ -103,7 +103,7 @@ public class TestWorkflowSweeper {
         taskModel.setTaskId("task1");
         taskModel.setTaskType(TaskType.TASK_TYPE_SIMPLE);
         taskModel.setStatus(Status.IN_PROGRESS);
-        workflowModel.setTasks(List.of(taskModel));
+        workflowModel.setTasks(Arrays.asList(taskModel));
         when(properties.getWorkflowOffsetTimeout())
                 .thenReturn(Duration.ofSeconds(defaultPostPoneOffSetSeconds));
         workflowSweeper.unack(workflowModel, defaultPostPoneOffSetSeconds);
@@ -124,7 +124,7 @@ public class TestWorkflowSweeper {
         taskModel.setTaskType(TaskType.TASK_TYPE_SIMPLE);
         taskModel.setStatus(Status.IN_PROGRESS);
         taskModel.setResponseTimeoutSeconds(responseTimeout);
-        workflowModel.setTasks(List.of(taskModel));
+        workflowModel.setTasks(Arrays.asList(taskModel));
         when(properties.getWorkflowOffsetTimeout())
                 .thenReturn(Duration.ofSeconds(defaultPostPoneOffSetSeconds));
         workflowSweeper.unack(workflowModel, defaultPostPoneOffSetSeconds);
@@ -144,7 +144,7 @@ public class TestWorkflowSweeper {
         taskModel.setTaskType(TaskType.TASK_TYPE_SIMPLE);
         taskModel.setStatus(Status.SCHEDULED);
         taskModel.setReferenceTaskName("task1");
-        workflowModel.setTasks(List.of(taskModel));
+        workflowModel.setTasks(Arrays.asList(taskModel));
         when(properties.getWorkflowOffsetTimeout())
                 .thenReturn(Duration.ofSeconds(defaultPostPoneOffSetSeconds));
         workflowSweeper.unack(workflowModel, defaultPostPoneOffSetSeconds);
@@ -167,7 +167,7 @@ public class TestWorkflowSweeper {
         taskModel.setTaskId("task1");
         taskModel.setTaskType(TaskType.TASK_TYPE_SIMPLE);
         taskModel.setStatus(Status.SCHEDULED);
-        workflowModel.setTasks(List.of(taskModel));
+        workflowModel.setTasks(Arrays.asList(taskModel));
         when(properties.getWorkflowOffsetTimeout())
                 .thenReturn(Duration.ofSeconds(defaultPostPoneOffSetSeconds));
         workflowSweeper.unack(workflowModel, defaultPostPoneOffSetSeconds);
@@ -186,7 +186,7 @@ public class TestWorkflowSweeper {
         workflowModel.setWorkflowDefinition(workflowDef);
         TaskDef taskDef = new TaskDef();
         TaskModel taskModel = mock(TaskModel.class);
-        workflowModel.setTasks(List.of(taskModel));
+        workflowModel.setTasks(Arrays.asList(taskModel));
         when(taskModel.getTaskDefinition()).thenReturn(Optional.of(taskDef));
         when(taskModel.getStatus()).thenReturn(Status.SCHEDULED);
         when(properties.getWorkflowOffsetTimeout())
@@ -205,7 +205,7 @@ public class TestWorkflowSweeper {
         workflowModel.setWorkflowDefinition(workflowDef);
         TaskDef taskDef = new TaskDef();
         TaskModel taskModel = mock(TaskModel.class);
-        workflowModel.setTasks(List.of(taskModel));
+        workflowModel.setTasks(Arrays.asList(taskModel));
         when(taskModel.getTaskDefinition()).thenReturn(Optional.of(taskDef));
         when(taskModel.getStatus()).thenReturn(Status.SCHEDULED);
         when(properties.getWorkflowOffsetTimeout())
@@ -226,7 +226,7 @@ public class TestWorkflowSweeper {
         WorkflowDef workflowDef = new WorkflowDef();
         workflowModel.setWorkflowDefinition(workflowDef);
         TaskModel taskModel = mock(TaskModel.class);
-        workflowModel.setTasks(List.of(taskModel));
+        workflowModel.setTasks(Arrays.asList(taskModel));
         when(taskModel.getStatus()).thenReturn(Status.SCHEDULED);
         when(taskModel.getTaskDefinition()).thenReturn(Optional.of(taskDef));
         when(properties.getWorkflowOffsetTimeout())
@@ -248,7 +248,7 @@ public class TestWorkflowSweeper {
         taskDef.setPollTimeoutSeconds(pollTimeout);
         TaskModel taskModel = mock(TaskModel.class);
         ;
-        workflowModel.setTasks(List.of(taskModel));
+        workflowModel.setTasks(Arrays.asList(taskModel));
         when(taskModel.getStatus()).thenReturn(Status.SCHEDULED);
         when(taskModel.getTaskDefinition()).thenReturn(Optional.of(taskDef));
         when(properties.getWorkflowOffsetTimeout())

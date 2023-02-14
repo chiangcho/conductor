@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,7 +73,7 @@ public class DoWhileTaskMapper implements TaskMapper {
         TaskModel task = workflowModel.getTaskByRefName(workflowTask.getTaskReferenceName());
         if (task != null && task.getStatus().isTerminal()) {
             // Since loopTask is already completed no need to schedule task again.
-            return List.of();
+            return Arrays.asList();
         }
 
         TaskDef taskDefinition =
@@ -99,6 +100,6 @@ public class DoWhileTaskMapper implements TaskMapper {
                         doWhileTask.getTaskId(),
                         taskDefinition);
         doWhileTask.setInputData(taskInput);
-        return List.of(doWhileTask);
+        return Arrays.asList(doWhileTask);
     }
 }

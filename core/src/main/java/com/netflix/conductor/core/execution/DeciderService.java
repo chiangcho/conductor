@@ -174,7 +174,7 @@ public class DeciderService {
             }
 
             Optional<TaskDef> taskDefinition = pendingTask.getTaskDefinition();
-            if (taskDefinition.isEmpty()) {
+            if (!taskDefinition.isPresent()) {
                 taskDefinition =
                         Optional.ofNullable(
                                         workflow.getWorkflowDefinition()

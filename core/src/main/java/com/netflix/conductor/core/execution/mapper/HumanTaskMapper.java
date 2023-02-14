@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -67,6 +68,6 @@ public class HumanTaskMapper implements TaskMapper {
         humanTask.setInputData(humanTaskInput);
         humanTask.setStartTime(System.currentTimeMillis());
         humanTask.setStatus(TaskModel.Status.IN_PROGRESS);
-        return List.of(humanTask);
+        return Arrays.asList(humanTask);
     }
 }

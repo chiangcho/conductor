@@ -81,7 +81,7 @@ public class WorkflowResourceTest {
         Workflow workflow = new Workflow();
         workflow.setCorrelationId("123");
         ArrayList<Workflow> listOfWorkflows =
-                new ArrayList<>() {
+                new ArrayList<Workflow>() {
                     {
                         add(workflow);
                     }
@@ -97,14 +97,14 @@ public class WorkflowResourceTest {
         workflow.setCorrelationId("c123");
 
         List<Workflow> workflowArrayList =
-                new ArrayList<>() {
+                new ArrayList<Workflow>() {
                     {
                         add(workflow);
                     }
                 };
 
         List<String> correlationIdList =
-                new ArrayList<>() {
+                new ArrayList<String>() {
                     {
                         add("c123");
                     }
@@ -138,7 +138,7 @@ public class WorkflowResourceTest {
     @Test
     public void testGetRunningWorkflow() {
         List<String> listOfWorklfows =
-                new ArrayList<>() {
+                new ArrayList<String>() {
                     {
                         add("w123");
                     }

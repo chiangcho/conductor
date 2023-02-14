@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -69,6 +70,6 @@ public class WaitTaskMapper implements TaskMapper {
         waitTask.setInputData(waitTaskInput);
         waitTask.setStartTime(System.currentTimeMillis());
         waitTask.setStatus(TaskModel.Status.IN_PROGRESS);
-        return List.of(waitTask);
+        return Arrays.asList(waitTask);
     }
 }

@@ -13,6 +13,7 @@
 package com.netflix.conductor.dao;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -90,12 +91,12 @@ public abstract class ExecutionDAOTest {
 
         expectedException.expect(IllegalArgumentException.class);
         expectedException.expectMessage("Workflow instance id cannot be null");
-        getExecutionDAO().createTasks(List.of(task));
+        getExecutionDAO().createTasks(Arrays.asList(task));
 
         task.setWorkflowInstanceId(UUID.randomUUID().toString());
         expectedException.expect(IllegalArgumentException.class);
         expectedException.expectMessage("Task reference name cannot be null");
-        getExecutionDAO().createTasks(List.of(task));
+        getExecutionDAO().createTasks(Arrays.asList(task));
     }
 
     @Test

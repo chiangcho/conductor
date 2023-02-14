@@ -1282,13 +1282,13 @@ public class TestWorkflowExecutor {
         workflow.setStatus(WorkflowModel.Status.FAILED);
         workflow.setReasonForIncompletion("task1 failed");
         workflow.setFailedReferenceTaskNames(
-                new HashSet<>() {
+                new HashSet<String>() {
                     {
                         add("task1_ref1");
                     }
                 });
         workflow.setFailedTaskNames(
-                new HashSet<>() {
+                new HashSet<String>() {
                     {
                         add("task1");
                     }
@@ -1438,13 +1438,13 @@ public class TestWorkflowExecutor {
         workflow.setStatus(WorkflowModel.Status.FAILED);
         workflow.setReasonForIncompletion("task1 failed");
         workflow.setFailedReferenceTaskNames(
-                new HashSet<>() {
+                new HashSet<String>() {
                     {
                         add("task1_ref1");
                     }
                 });
         workflow.setFailedTaskNames(
-                new HashSet<>() {
+                new HashSet<String>() {
                     {
                         add("task1");
                     }
@@ -1527,13 +1527,13 @@ public class TestWorkflowExecutor {
         workflow.setStatus(WorkflowModel.Status.FAILED);
         workflow.setReasonForIncompletion("task2 failed");
         workflow.setFailedReferenceTaskNames(
-                new HashSet<>() {
+                new HashSet<String>() {
                     {
                         add("task2_ref");
                     }
                 });
         workflow.setFailedTaskNames(
-                new HashSet<>() {
+                new HashSet<String>() {
                     {
                         add("task2");
                     }
@@ -1925,7 +1925,7 @@ public class TestWorkflowExecutor {
     public void testScheduleNextIteration() {
         WorkflowModel workflow = generateSampleWorkflow();
         workflow.setTaskToDomain(
-                new HashMap<>() {
+                new HashMap<String, String>() {
                     {
                         put("TEST", "domain1");
                     }
@@ -1934,7 +1934,7 @@ public class TestWorkflowExecutor {
         WorkflowTask loopWfTask = mock(WorkflowTask.class);
         when(loopTask.getWorkflowTask()).thenReturn(loopWfTask);
         List<WorkflowTask> loopOver =
-                new ArrayList<>() {
+                new ArrayList<WorkflowTask>() {
                     {
                         WorkflowTask workflowTask = new WorkflowTask();
                         workflowTask.setType(TaskType.TASK_TYPE_SIMPLE);
@@ -2467,7 +2467,7 @@ public class TestWorkflowExecutor {
         joinTask.setType(JOIN.name());
         joinTask.setName("join");
         joinTask.setTaskReferenceName("join");
-        joinTask.setJoinOn(List.of("branchTask2"));
+        joinTask.setJoinOn(Arrays.asList("branchTask2"));
 
         WorkflowTask doWhile = new WorkflowTask();
         doWhile.setType(DO_WHILE.name());
@@ -2479,9 +2479,9 @@ public class TestWorkflowExecutor {
         loopTask.setName("loopTask");
         loopTask.setTaskReferenceName("loopTask");
 
-        doWhile.setLoopOver(List.of(loopTask));
+        doWhile.setLoopOver(Arrays.asList(loopTask));
 
-        workflowDef.getTasks().addAll(List.of(simpleTask, forkTask, joinTask, doWhile));
+        workflowDef.getTasks().addAll(Arrays.asList(simpleTask, forkTask, joinTask, doWhile));
 
         TaskModel task = new TaskModel();
 

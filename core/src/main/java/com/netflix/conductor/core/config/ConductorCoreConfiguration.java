@@ -102,7 +102,7 @@ public class ConductorCoreConfiguration {
     public Set<WorkflowSystemTask> asyncSystemTasks(Set<WorkflowSystemTask> allSystemTasks) {
         return allSystemTasks.stream()
                 .filter(WorkflowSystemTask::isAsync)
-                .collect(Collectors.toUnmodifiableSet());
+                .collect(Collectors.toSet());
     }
 
     @Bean

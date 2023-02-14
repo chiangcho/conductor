@@ -14,8 +14,8 @@ package com.netflix.conductor.core.execution.mapper;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -55,7 +55,13 @@ public class DoWhileTaskMapperTest {
         WorkflowTask workflowTask = new WorkflowTask();
         workflowTask.setType(TaskType.DO_WHILE.name());
         workflowTask.setTaskReferenceName("Test");
-        workflowTask.setInputParameters(Map.of("value", "${workflow.input.foo}"));
+
+        workflowTask.setInputParameters(
+                new HashMap<String, Object>() {
+                    {
+                        put("value", "${workflow.input.foo}");
+                    }
+                });
         task1 = new TaskModel();
         task1.setReferenceTaskName("task1");
         TaskModel task2 = new TaskModel();
@@ -75,7 +81,12 @@ public class DoWhileTaskMapperTest {
         WorkflowDef workflowDef = new WorkflowDef();
         workflow = new WorkflowModel();
         workflow.setWorkflowDefinition(workflowDef);
-        workflow.setInput(Map.of("foo", "bar"));
+        workflow.setInput(
+                new HashMap<String, Object>() {
+                    {
+                        put("foo", "bar");
+                    }
+                });
 
         deciderService = Mockito.mock(DeciderService.class);
         metadataDAO = Mockito.mock(MetadataDAO.class);
@@ -108,7 +119,13 @@ public class DoWhileTaskMapperTest {
         assertEquals(mappedTasks.size(), 1);
         assertEquals(TASK_TYPE_DO_WHILE, mappedTasks.get(0).getTaskType());
         assertNotNull(mappedTasks.get(0).getInputData());
-        assertEquals(Map.of("value", "bar"), mappedTasks.get(0).getInputData());
+        assertEquals(
+                new HashMap<String, Object>() {
+                    {
+                        put("value", "bar");
+                    }
+                },
+                mappedTasks.get(0).getInputData());
     }
 
     @Test

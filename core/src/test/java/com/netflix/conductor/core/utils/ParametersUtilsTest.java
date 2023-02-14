@@ -300,7 +300,13 @@ public class ParametersUtilsTest {
     @Test
     public void getWorkflowInputHandlesNullInputTemplate() {
         WorkflowDef workflowDef = new WorkflowDef();
-        Map<String, Object> inputParams = Map.of("key", "value");
+        Map<String, Object> inputParams =
+                new HashMap<>(
+                        new HashMap<String, Object>() {
+                            {
+                                put("key", "value");
+                            }
+                        });
         Map<String, Object> workflowInput =
                 parametersUtils.getWorkflowInput(workflowDef, inputParams);
         assertEquals("value", workflowInput.get("key"));
@@ -309,8 +315,21 @@ public class ParametersUtilsTest {
     @Test
     public void getWorkflowInputFillsInTemplatedFields() {
         WorkflowDef workflowDef = new WorkflowDef();
-        workflowDef.setInputTemplate(Map.of("other_key", "other_value"));
-        Map<String, Object> inputParams = new HashMap<>(Map.of("key", "value"));
+        workflowDef.setInputTemplate(
+                new HashMap<>(
+                        new HashMap<String, Object>() {
+                            {
+                                put("other_key", "other_value");
+                            }
+                        }));
+        Map<String, Object> inputParams =
+                new HashMap<>(
+                        new HashMap<>(
+                                new HashMap<String, Object>() {
+                                    {
+                                        put("key", "value");
+                                    }
+                                }));
         Map<String, Object> workflowInput =
                 parametersUtils.getWorkflowInput(workflowDef, inputParams);
         assertEquals("value", workflowInput.get("key"));
@@ -321,8 +340,19 @@ public class ParametersUtilsTest {
     public void getWorkflowInputPreservesExistingFieldsIfPopulated() {
         WorkflowDef workflowDef = new WorkflowDef();
         String keyName = "key";
-        workflowDef.setInputTemplate(Map.of(keyName, "templated_value"));
-        Map<String, Object> inputParams = new HashMap<>(Map.of(keyName, "supplied_value"));
+        workflowDef.setInputTemplate(
+                new HashMap<String, Object>() {
+                    {
+                        put(keyName, "templated_value");
+                    }
+                });
+        Map<String, Object> inputParams =
+                new HashMap<>(
+                        new HashMap<String, Object>() {
+                            {
+                                put(keyName, "supplied_value");
+                            }
+                        });
         Map<String, Object> workflowInput =
                 parametersUtils.getWorkflowInput(workflowDef, inputParams);
         assertEquals("supplied_value", workflowInput.get(keyName));

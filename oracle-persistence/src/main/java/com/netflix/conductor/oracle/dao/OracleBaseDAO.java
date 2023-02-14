@@ -37,12 +37,11 @@ import com.netflix.conductor.oracle.util.TransactionalFunction;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 
 public abstract class OracleBaseDAO {
 
     private static final List<String> EXCLUDED_STACKTRACE_CLASS =
-            ImmutableList.of(OracleBaseDAO.class.getName(), Thread.class.getName());
+            Arrays.asList(OracleBaseDAO.class.getName(), Thread.class.getName());
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected final ObjectMapper objectMapper;

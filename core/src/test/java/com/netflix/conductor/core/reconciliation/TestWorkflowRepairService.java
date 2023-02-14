@@ -178,7 +178,12 @@ public class TestWorkflowRepairService {
         task.setStatus(TaskModel.Status.IN_PROGRESS);
         task.setTaskId("abcd");
         task.setCallbackAfterSeconds(60);
-        task.setInputData(Map.of("asyncComplete", true));
+        task.setInputData(
+                new HashMap<String, Object>() {
+                    {
+                        put("asyncComplete", true);
+                    }
+                });
 
         WorkflowSystemTask workflowSystemTask =
                 new Event(
@@ -249,7 +254,13 @@ public class TestWorkflowRepairService {
         WorkflowModel subWorkflow = new WorkflowModel();
         subWorkflow.setWorkflowId(subWorkflowId);
         subWorkflow.setStatus(WorkflowModel.Status.TERMINATED);
-        subWorkflow.setOutput(Map.of("k1", "v1", "k2", "v2"));
+        subWorkflow.setOutput(
+                new HashMap<String, Object>() {
+                    {
+                        put("k1", "v1");
+                        put("k2", "v2");
+                    }
+                });
 
         when(executionDAO.getWorkflow(subWorkflowId, false)).thenReturn(subWorkflow);
 

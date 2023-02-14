@@ -53,9 +53,9 @@ allprojects {
     apply plugin: 'java-library'
     apply plugin: 'project-report'
 
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+	version = '3.14.0-JDK8-SNAPSHOT'
     group = 'com.netflix.conductor'
 
     configurations.all {
@@ -146,13 +146,13 @@ allprojects {
 }
 
 // all client and their related modules are published with Java 8 compatibility
-["annotations", "common"].each {
-    project(":conductor-$it") {
-        compileJava {
-            options.release = 8
-        }
-    }
-}
+//["annotations", "common"].each {
+//    project(":conductor-$it") {
+//        compileJava {
+//            options.release = 8
+//        }
+//    }
+//}
 
 jacocoTestReport {
     reports {

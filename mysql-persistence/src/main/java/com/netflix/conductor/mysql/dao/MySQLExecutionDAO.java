@@ -161,7 +161,7 @@ public class MySQLExecutionDAO extends MySQLBaseDAO
     public boolean exceedsLimit(TaskModel task) {
 
         Optional<TaskDef> taskDefinition = task.getTaskDefinition();
-        if (taskDefinition.isEmpty()) {
+        if (!taskDefinition.isPresent()) {
             return false;
         }
 

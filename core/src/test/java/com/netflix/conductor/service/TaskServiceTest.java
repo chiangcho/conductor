@@ -12,7 +12,7 @@
  */
 package com.netflix.conductor.service;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.Set;
 
 import javax.validation.ConstraintViolationException;
@@ -230,7 +230,8 @@ public class TaskServiceTest {
     @Test
     public void testSearch() {
         SearchResult<TaskSummary> searchResult =
-                new SearchResult<>(2, List.of(mock(TaskSummary.class), mock(TaskSummary.class)));
+                new SearchResult<>(
+                        2, Arrays.asList(mock(TaskSummary.class), mock(TaskSummary.class)));
         when(executionService.getSearchTasks("query", "*", 0, 2, "Sort")).thenReturn(searchResult);
         assertEquals(searchResult, taskService.search(0, 2, "Sort", "*", "query"));
     }
@@ -238,7 +239,7 @@ public class TaskServiceTest {
     @Test
     public void testSearchV2() {
         SearchResult<Task> searchResult =
-                new SearchResult<>(2, List.of(mock(Task.class), mock(Task.class)));
+                new SearchResult<>(2, Arrays.asList(mock(Task.class), mock(Task.class)));
         when(executionService.getSearchTasksV2("query", "*", 0, 2, "Sort"))
                 .thenReturn(searchResult);
         assertEquals(searchResult, taskService.searchV2(0, 2, "Sort", "*", "query"));

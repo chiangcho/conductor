@@ -114,10 +114,14 @@ public class Message extends AbstractMessage {
         private static String toUnderscoreCase(String input) {
             Matcher m = CAMEL_CASE_RE.matcher(input);
             StringBuilder sb = new StringBuilder();
+            int start = 0;
             while (m.find()) {
-                m.appendReplacement(sb, "_" + m.group());
+                sb.append(input, start, m.start());
+                sb.append("_");
+                sb.append(Character.toLowerCase(m.group().charAt(0)));
+                start = m.end();
             }
-            m.appendTail(sb);
+            sb.append(input, start, input.length());
             return sb.toString().toLowerCase();
         }
 

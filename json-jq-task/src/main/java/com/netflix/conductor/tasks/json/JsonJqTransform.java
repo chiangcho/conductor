@@ -45,8 +45,9 @@ public class JsonJqTransform extends WorkflowSystemTask {
     private static final String OUTPUT_RESULT = "result";
     private static final String OUTPUT_RESULT_LIST = "resultList";
     private static final String OUTPUT_ERROR = "error";
-    private static final TypeReference<Map<String, Object>> mapType = new TypeReference<>() {};
-    private final TypeReference<List<Object>> listType = new TypeReference<>() {};
+    private static final TypeReference<Map<String, Object>> mapType =
+            new TypeReference<Map<String, Object>>() {};
+    private final TypeReference<List<Object>> listType = new TypeReference<List<Object>>() {};
     private final Scope rootScope;
     private final ObjectMapper objectMapper;
     private final LoadingCache<String, JsonQuery> queryCache = createQueryCache();
