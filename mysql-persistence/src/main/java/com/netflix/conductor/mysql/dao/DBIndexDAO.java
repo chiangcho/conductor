@@ -217,7 +217,7 @@ public class DBIndexDAO implements IndexDAO {
 
     @Override
     public void indexTask(TaskSummary task) {
-        jdbcTemplate.update("delete from index_task where task_id = ?", task.getTaskId());
+        jdbcTemplate.update("delete from index_workflow_task where task_id = ?", task.getTaskId());
 
         Timestamp scheduledTimeTp = convertTimestamp(task.getScheduledTime());
         Timestamp startTimeTp = convertTimestamp(task.getStartTime());
@@ -228,7 +228,7 @@ public class DBIndexDAO implements IndexDAO {
             endTimeTp = null;
         }
         String insertWorkflowSql =
-                "insert into index_task (task_id, workflow_id, correlation_id, workflow_type, workflow_priority, task_def_name, task_type"
+                "insert into index_workflow_task (task_id, workflow_id, correlation_id, workflow_type, workflow_priority, task_def_name, task_type"
                         + ", domain, execution_time, queue_wait_time, reason_for_incompletion, status, json_data, scheduled_time, start_time, end_time, update_time)"
                         + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(
@@ -260,7 +260,7 @@ public class DBIndexDAO implements IndexDAO {
     @Override
     public void addTaskExecutionLogs(List<TaskExecLog> taskExecLogs) {
         String insertTaskExecLogSql =
-                "insert into index_task_execution_log (task_id, log, created_time) VALUES (?, ?, ?, ?)";
+                "insert into index_workflow_task_execution_log (task_id, log, created_time) VALUES (?, ?, ?, ?)";
         for (TaskExecLog taskExecLog : taskExecLogs) {
             jdbcTemplate.update(
                     insertTaskExecLogSql,
@@ -279,7 +279,7 @@ public class DBIndexDAO implements IndexDAO {
     public List<TaskExecLog> getTaskExecutionLogs(String taskId) {
         List<TaskExecLog> logs =
                 jdbcTemplate.queryForList(
-                        "select * from index_task_execution_log where task_id = ?",
+                        "select * from index_workflow_task_execution_log where task_id = ?",
                         TaskExecLog.class,
                         taskId);
         return logs;
@@ -493,12 +493,12 @@ public class DBIndexDAO implements IndexDAO {
         String condition = this.handleCondition(query, freeText);
         String orderStr = this.handleSort(sort);
 
-        String sql = "select task_id from index_task " + condition + orderStr;
+        String sql = "select task_id from index_workflow_task " + condition + orderStr;
         sql = dialect.pagin(start + 1, count, sql);
         LOGGER.debug(sql);
         List<String> results = jdbcTemplate.queryForList(sql, String.class);
 
-        String countSql = "select count(task_id) from index_task " + condition;
+        String countSql = "select count(task_id) from index_workflow_task " + condition;
         Integer allCount = jdbcTemplate.queryForObject(countSql, Integer.class);
         SearchResult<String> searchResult = new SearchResult<>(allCount, results);
         return searchResult;
@@ -546,7 +546,7 @@ public class DBIndexDAO implements IndexDAO {
     }
 
     private void removeWorkflowTask(String workflowId) {
-        jdbcTemplate.update("delete from index_task where workflow_id = ?", workflowId);
+        jdbcTemplate.update("delete from index_workflow_task where workflow_id = ?", workflowId);
     }
 
     @Override
