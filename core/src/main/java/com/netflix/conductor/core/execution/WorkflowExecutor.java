@@ -575,7 +575,7 @@ public class WorkflowExecutor {
     public WorkflowModel terminateWorkflow(
             WorkflowModel workflow, String reason, String failureWorkflow) {
         try {
-            executionLockService.acquireLock(workflow.getWorkflowId(), 60000);
+            executionLockService.acquireLock(workflow.getWorkflowId(), 100);
 
             if (!workflow.getStatus().isTerminal()) {
                 workflow.setStatus(WorkflowModel.Status.TERMINATED);
@@ -992,6 +992,16 @@ public class WorkflowExecutor {
      *     No locking is required or lock is acquired externally
      */
     public WorkflowModel decide(WorkflowModel workflow) {
+    	return this.decide(workflow, null);
+    }
+
+    /**
+     * @param workflow the workflow to evaluate the state for
+     * @return true if the workflow has completed (success or failed), false otherwise. Note: This
+     *     method does not acquire the lock on the workflow and should ony be called / overridden if
+     *     No locking is required or lock is acquired externally
+     */
+    public WorkflowModel decide(WorkflowModel workflow,TaskModel preTask) {
         if (workflow.getStatus().isTerminal()) {
             if (!workflow.getStatus().isSuccessful()) {
                 cancelNonTerminalTasks(workflow);
@@ -1004,7 +1014,7 @@ public class WorkflowExecutor {
         adjustStateIfSubWorkflowChanged(workflow);
 
         try {
-            DeciderService.DeciderOutcome outcome = deciderService.decide(workflow);
+            DeciderService.DeciderOutcome outcome = preTask != null ? deciderService.decide(workflow,Collections.singletonList(preTask)):deciderService.decide(workflow);
             if (outcome.isComplete) {
                 endExecution(workflow, outcome.terminateTask);
                 return workflow;
@@ -1037,7 +1047,22 @@ public class WorkflowExecutor {
             }
 
             if (stateChanged) {
-                return decide(workflow);
+            	if(preTask != null) {
+            		TaskModel lastTask = null;
+                	List<TaskModel> tasksToBeScheduled2 =
+                			tasksToBeScheduled.stream()
+                                    .filter(task -> task.getStatus() == TaskModel.Status.COMPLETED)
+                                    .collect(Collectors.toList());
+                	if (!outcome.tasksToBeUpdated.isEmpty()) {
+                		lastTask = tasksToBeUpdated.get(tasksToBeUpdated.size() - 1);
+                    } else if (!tasksToBeScheduled.isEmpty()) {
+                    	lastTask = tasksToBeScheduled.get(tasksToBeScheduled.size() - 1);
+                    }
+                    return decide(workflow, lastTask);
+            	} else {
+            		return decide(workflow);
+            	}
+            	
             }
 
             if (!outcome.tasksToBeUpdated.isEmpty() || !tasksToBeScheduled.isEmpty()) {

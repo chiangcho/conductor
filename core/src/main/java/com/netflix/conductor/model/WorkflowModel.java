@@ -13,6 +13,7 @@
 package com.netflix.conductor.model;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -63,7 +64,7 @@ public class WorkflowModel {
 
     private String parentWorkflowTaskId;
 
-    private List<TaskModel> tasks = new LinkedList<>();
+    private List<TaskModel> tasks = new CopyOnWriteArrayList();
 
     private String correlationId;
 
