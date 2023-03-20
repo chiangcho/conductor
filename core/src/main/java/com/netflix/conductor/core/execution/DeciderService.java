@@ -109,7 +109,7 @@ public class DeciderService {
         return decide(workflow, tasksToBeScheduled);
     }
 
-    private DeciderOutcome decide(final WorkflowModel workflow, List<TaskModel> preScheduledTasks)
+    public DeciderOutcome decide(final WorkflowModel workflow, List<TaskModel> preScheduledTasks)
             throws TerminateWorkflowException {
 
         DeciderOutcome outcome = new DeciderOutcome();
@@ -487,6 +487,24 @@ public class DeciderService {
                                             .equals(nextTaskReferenceName))) {
                 return Collections.emptyList();
             }
+        }
+        //fork分支中的task在子线程中执行时，不需要获取fork后的join，只需要处理到分支的最后一个task即可
+        //当时分支最后一个节点时，默认的getNextTask会返回join，因此此处如果判断不需要返回则重新设置为空
+        if(taskToSchedule != null && TaskType.JOIN.name().equals(taskToSchedule.getType())) {
+	        List<TaskModel> tasks = workflow.getTasks();
+	        int forkCount = 0;
+	        int joinCount = 0;
+	        for (TaskModel taskModel : tasks) {
+				if(TaskType.FORK_JOIN.name().equals(taskModel.getTaskType())) {
+					forkCount++;
+				}
+				if(TaskType.JOIN.name().equals(taskModel.getTaskType())) {
+					joinCount++;
+				}
+			}
+	        if(joinCount >= forkCount) {
+	        	taskToSchedule = null;
+	        }
         }
         if (taskToSchedule != null) {
             return getTasksToBeScheduled(workflow, taskToSchedule, 0);
