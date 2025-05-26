@@ -148,6 +148,10 @@ public class DBIndexDAO implements IndexDAO {
         Timestamp updateTimeTp = convertTimestamp(workflow.getUpdateTime());
         Timestamp endTimeTp = convertTimestamp(workflow.getEndTime());
         String status = workflow.getStatus().toString();
+        int count = this.updateWorkflow(workflow);
+        if (count > 0) {
+            return;
+        }
         String insertWorkflowSql =
                 "insert into index_workflow (workflow_id, correlation_id, workflow_type, workflow_version, reason_for_incompletion, status,json_data, execution_time, start_time, end_time, update_time)"
                         + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -164,6 +168,31 @@ public class DBIndexDAO implements IndexDAO {
                 startTimeTp,
                 endTimeTp,
                 updateTimeTp);
+    }
+
+    public int updateWorkflow(WorkflowSummary workflow) {
+        this.removeWorkflowNotIncludeTask(workflow.getWorkflowId());
+
+        Timestamp startTimeTp = convertTimestamp(workflow.getStartTime());
+        Timestamp updateTimeTp = convertTimestamp(workflow.getUpdateTime());
+        Timestamp endTimeTp = convertTimestamp(workflow.getEndTime());
+        String status = workflow.getStatus().toString();
+        String insertWorkflowSql =
+                "update index_workflow set correlation_id = ?, workflow_type = ?, workflow_version = ?, reason_for_incompletion = ?, status = ?,json_data = ?, execution_time = ?, start_time = ?, end_time = ?, update_time = ?"
+                        + " where workflow_id = ?";
+        return jdbcTemplate.update(
+                insertWorkflowSql,
+                workflow.getCorrelationId(),
+                workflow.getWorkflowType(),
+                workflow.getVersion(),
+                workflow.getReasonForIncompletion(),
+                status,
+                "{\"input\":" + workflow.getInput() + ",\"output\":" + workflow.getOutput() + "}",
+                workflow.getExecutionTime(),
+                startTimeTp,
+                endTimeTp,
+                updateTimeTp,
+                workflow.getWorkflowId());
     }
 
     private Timestamp convertTimestamp(String dateTime) {
