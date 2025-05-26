@@ -68,7 +68,8 @@ public class GroovyTaskMapper implements TaskMapper {
         TaskModel groovyTask = taskMapperContext.createTaskModel();
         groovyTask.setStartTime(System.currentTimeMillis());
         groovyTask.setInputData(taskInput);
-        groovyTask.setStatus(TaskModel.Status.IN_PROGRESS);
+        // 如果不需要执行execute，则直接设置为COMPLETED
+        groovyTask.setStatus(TaskModel.Status.COMPLETED);
 
         List<TaskModel> groovyTaskList = new ArrayList<>();
         groovyTaskList.add(groovyTask);
