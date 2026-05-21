@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -34,6 +35,8 @@ import rx.schedulers.Schedulers;
 public class SchedulerConfiguration implements SchedulingConfigurer {
 
     public static final String SWEEPER_EXECUTOR_NAME = "WorkflowSweeperExecutor";
+
+    public static final String FORK_EXECUTOR_NAME = "ForkParallelExecutor";
 
     /**
      * Used by some {@link com.netflix.conductor.core.events.queue.ObservableQueue} implementations.
@@ -62,6 +65,21 @@ public class SchedulerConfiguration implements SchedulingConfigurer {
         ThreadFactory threadFactory =
                 new BasicThreadFactory.Builder().namingPattern("sweeper-thread-%d").build();
         return Executors.newFixedThreadPool(properties.getSweeperThreadCount(), threadFactory);
+    }
+
+    @Bean(FORK_EXECUTOR_NAME)
+    @ConditionalOnProperty(
+            name = "conductor.app.fork-parallel-enabled",
+            havingValue = "true")
+    public Executor forkExecutor(ConductorProperties properties) {
+        int threadCount = properties.getForkParallelThreadCount();
+        if (threadCount <= 0) {
+            throw new IllegalStateException(
+                    "conductor.app.fork-parallel-thread-count must be greater than 0.");
+        }
+        ThreadFactory threadFactory =
+                new BasicThreadFactory.Builder().namingPattern("fork-task-%d").build();
+        return Executors.newFixedThreadPool(threadCount, threadFactory);
     }
 
     @Override

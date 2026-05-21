@@ -109,7 +109,7 @@ public class DeciderService {
         return decide(workflow, tasksToBeScheduled);
     }
 
-    private DeciderOutcome decide(final WorkflowModel workflow, List<TaskModel> preScheduledTasks)
+    public DeciderOutcome decide(final WorkflowModel workflow, List<TaskModel> preScheduledTasks)
             throws TerminateWorkflowException {
 
         DeciderOutcome outcome = new DeciderOutcome();
@@ -488,11 +488,30 @@ public class DeciderService {
                 return Collections.emptyList();
             }
         }
+        // Fork branch threads run decide on a private WorkflowModel copy with an empty task list.
+        // When such a branch reaches the JOIN that follows its owning FORK, the JOIN must be
+        // scheduled by the main flow, not by the branch — otherwise we get duplicate JOIN tasks
+        // and races. Detect this by checking whether the branch's local view contains the FORK.
+        if (taskToSchedule != null
+                && TaskType.JOIN.name().equals(taskToSchedule.getType())
+                && isInForkBranchThread(workflow)) {
+            return Collections.emptyList();
+        }
         if (taskToSchedule != null) {
             return getTasksToBeScheduled(workflow, taskToSchedule, 0);
         }
 
         return Collections.emptyList();
+    }
+
+    private boolean isInForkBranchThread(WorkflowModel workflow) {
+        return workflow.getTasks().stream()
+                .noneMatch(
+                        t ->
+                                TaskType.FORK_JOIN.name().equals(t.getTaskType())
+                                        || TaskType.FORK_JOIN_DYNAMIC
+                                                .name()
+                                                .equals(t.getTaskType()));
     }
 
     private String getNextTasksToBeScheduled(WorkflowModel workflow, TaskModel task) {

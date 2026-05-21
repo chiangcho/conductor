@@ -61,6 +61,15 @@ public class AsyncSystemTaskExecutor {
      * @param taskId The id of the {@link TaskModel} object.
      */
     public void execute(WorkflowSystemTask systemTask, String taskId) {
+        execute(systemTask, taskId, false);
+    }
+
+    /**
+     * Variant of {@link #execute(WorkflowSystemTask, String)} that, when the task finishes, drives
+     * a targeted re-decide using the just-completed task as preTask. Used by callers that already
+     * hold a {@link WorkflowModel} and want to advance the next step within the same call stack.
+     */
+    public void execute(WorkflowSystemTask systemTask, String taskId, boolean executeNextTask) {
         TaskModel task = loadTaskQuietly(taskId);
         if (task == null) {
             LOGGER.error("TaskId: {} could not be found while executing {}", taskId, systemTask);
@@ -101,8 +110,9 @@ public class AsyncSystemTaskExecutor {
         String workflowId = task.getWorkflowInstanceId();
         // if we are here the Task object is updated and needs to be persisted regardless of an
         // exception
+        WorkflowModel workflow = null;
         try {
-            WorkflowModel workflow =
+            workflow =
                     executionDAOFacade.getWorkflowModel(
                             workflowId, systemTask.isTaskRetrievalRequired());
 
@@ -173,7 +183,11 @@ public class AsyncSystemTaskExecutor {
             executionDAOFacade.updateTask(task);
             // if the current task execution has completed, then the workflow needs to be evaluated
             if (hasTaskExecutionCompleted) {
-                workflowExecutor.decide(workflowId);
+                if (executeNextTask && workflow != null) {
+                    workflowExecutor.decide(workflow, task);
+                } else {
+                    workflowExecutor.decide(workflowId);
+                }
             }
         }
     }

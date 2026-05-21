@@ -992,6 +992,16 @@ public class WorkflowExecutor {
      *     No locking is required or lock is acquired externally
      */
     public WorkflowModel decide(WorkflowModel workflow) {
+        return decide(workflow, null);
+    }
+
+    /**
+     * Same as {@link #decide(WorkflowModel)} but allows the caller to supply a single task that has
+     * just transitioned and should drive a targeted re-decide. Used by {@link
+     * com.netflix.conductor.core.execution.tasks.Fork} to advance a single branch within its own
+     * thread without re-running the full decide on the whole workflow.
+     */
+    public WorkflowModel decide(WorkflowModel workflow, TaskModel preTask) {
         if (workflow.getStatus().isTerminal()) {
             if (!workflow.getStatus().isSuccessful()) {
                 cancelNonTerminalTasks(workflow);
@@ -1004,7 +1014,10 @@ public class WorkflowExecutor {
         adjustStateIfSubWorkflowChanged(workflow);
 
         try {
-            DeciderService.DeciderOutcome outcome = deciderService.decide(workflow);
+            DeciderService.DeciderOutcome outcome =
+                    preTask != null
+                            ? deciderService.decide(workflow, Collections.singletonList(preTask))
+                            : deciderService.decide(workflow);
             if (outcome.isComplete) {
                 endExecution(workflow, outcome.terminateTask);
                 return workflow;
@@ -1037,6 +1050,10 @@ public class WorkflowExecutor {
             }
 
             if (stateChanged) {
+                if (preTask != null) {
+                    TaskModel nextPreTask = pickNextPreTask(tasksToBeUpdated, tasksToBeScheduled);
+                    return nextPreTask != null ? decide(workflow, nextPreTask) : decide(workflow);
+                }
                 return decide(workflow);
             }
 
@@ -1054,6 +1071,28 @@ public class WorkflowExecutor {
             LOGGER.error("Error deciding workflow: {}", workflow.getWorkflowId(), e);
             throw e;
         }
+    }
+
+    /**
+     * Picks the task that should drive the next targeted re-decide in the branch-local
+     * {@link #decide(WorkflowModel, TaskModel)} loop. Prefers the most recent updated task; falls
+     * back to the most recent COMPLETED scheduled task, since a SCHEDULED task cannot drive
+     * {@code getNextTask} forward.
+     */
+    private TaskModel pickNextPreTask(
+            List<TaskModel> tasksToBeUpdated, List<TaskModel> tasksToBeScheduled) {
+        if (tasksToBeUpdated != null && !tasksToBeUpdated.isEmpty()) {
+            return tasksToBeUpdated.get(tasksToBeUpdated.size() - 1);
+        }
+        if (tasksToBeScheduled != null) {
+            for (int i = tasksToBeScheduled.size() - 1; i >= 0; i--) {
+                TaskModel t = tasksToBeScheduled.get(i);
+                if (t.getStatus() == TaskModel.Status.COMPLETED) {
+                    return t;
+                }
+            }
+        }
+        return null;
     }
 
     private void adjustStateIfSubWorkflowChanged(WorkflowModel workflow) {

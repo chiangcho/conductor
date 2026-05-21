@@ -210,6 +210,16 @@ public class ConductorProperties {
     /** Used to limit the size of task execution logs. */
     private int taskExecLogSizeLimit = 10;
 
+    /**
+     * When enabled, FORK_JOIN tasks dispatch each branch to a dedicated thread pool and the Fork
+     * task waits for all branches to finish before completing. Default false: keeps the upstream
+     * Netflix behavior where branches are advanced one decide cycle at a time.
+     */
+    private boolean forkParallelEnabled = false;
+
+    /** Thread pool size used to execute fork branches when fork-parallel-enabled is true. */
+    private int forkParallelThreadCount = Runtime.getRuntime().availableProcessors() * 2;
+
     public String getStack() {
         return stack;
     }
@@ -508,6 +518,22 @@ public class ConductorProperties {
 
     public void setTaskExecLogSizeLimit(int taskExecLogSizeLimit) {
         this.taskExecLogSizeLimit = taskExecLogSizeLimit;
+    }
+
+    public boolean isForkParallelEnabled() {
+        return forkParallelEnabled;
+    }
+
+    public void setForkParallelEnabled(boolean forkParallelEnabled) {
+        this.forkParallelEnabled = forkParallelEnabled;
+    }
+
+    public int getForkParallelThreadCount() {
+        return forkParallelThreadCount;
+    }
+
+    public void setForkParallelThreadCount(int forkParallelThreadCount) {
+        this.forkParallelThreadCount = forkParallelThreadCount;
     }
 
     /**

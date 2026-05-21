@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import com.netflix.conductor.common.metadata.tasks.TaskType;
 import com.netflix.conductor.common.metadata.workflow.WorkflowDef;
 import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
+import com.netflix.conductor.core.config.ConductorProperties;
 import com.netflix.conductor.core.exception.TerminateWorkflowException;
 import com.netflix.conductor.model.TaskModel;
 import com.netflix.conductor.model.WorkflowModel;
@@ -36,6 +37,12 @@ import com.netflix.conductor.model.WorkflowModel;
 public class ForkJoinTaskMapper implements TaskMapper {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(ForkJoinTaskMapper.class);
+
+    private final ConductorProperties properties;
+
+    public ForkJoinTaskMapper(ConductorProperties properties) {
+        this.properties = properties;
+    }
 
     @Override
     public String getTaskType() {
@@ -80,14 +87,20 @@ public class ForkJoinTaskMapper implements TaskMapper {
         forkTask.setStatus(TaskModel.Status.COMPLETED);
 
         tasksToBeScheduled.add(forkTask);
-        List<List<WorkflowTask>> forkTasks = workflowTask.getForkTasks();
-        for (List<WorkflowTask> wfts : forkTasks) {
-            WorkflowTask wft = wfts.get(0);
-            List<TaskModel> tasks2 =
-                    taskMapperContext
-                            .getDeciderService()
-                            .getTasksToBeScheduled(workflowModel, wft, retryCount);
-            tasksToBeScheduled.addAll(tasks2);
+        // When fork-parallel is disabled the upstream Netflix flow pre-schedules each branch's
+        // first task here so that the SystemTaskWorker / decide loop picks them up. When
+        // fork-parallel is enabled, Fork.start dispatches branches itself in worker threads, so
+        // we must not pre-schedule here — otherwise each branch first task would be created twice.
+        if (!properties.isForkParallelEnabled()) {
+            List<List<WorkflowTask>> forkTasks = workflowTask.getForkTasks();
+            for (List<WorkflowTask> wfts : forkTasks) {
+                WorkflowTask wft = wfts.get(0);
+                List<TaskModel> tasks2 =
+                        taskMapperContext
+                                .getDeciderService()
+                                .getTasksToBeScheduled(workflowModel, wft, retryCount);
+                tasksToBeScheduled.addAll(tasks2);
+            }
         }
 
         WorkflowTask joinWorkflowTask =
