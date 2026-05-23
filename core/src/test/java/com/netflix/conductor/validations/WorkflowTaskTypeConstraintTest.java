@@ -182,7 +182,10 @@ public class WorkflowTaskTypeConstraintTest {
         workflowTask.setType("WAIT");
         Set<ConstraintViolation<WorkflowTask>> result = validator.validate(workflowTask);
         assertEquals(0, result.size());
-        workflowTask.setInputParameters(Map.of("duration", "10s", "until", "2022-04-16"));
+        Map<String, Object> waitParams = new HashMap<>();
+        waitParams.put("duration", "10s");
+        waitParams.put("until", "2022-04-16");
+        workflowTask.setInputParameters(waitParams);
 
         when(mockMetadataDao.getTaskDef(anyString())).thenReturn(new TaskDef());
 

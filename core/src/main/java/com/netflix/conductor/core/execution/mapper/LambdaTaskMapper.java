@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -78,6 +79,6 @@ public class LambdaTaskMapper implements TaskMapper {
         lambdaTask.setInputData(taskInput);
         lambdaTask.setStatus(TaskModel.Status.IN_PROGRESS);
 
-        return List.of(lambdaTask);
+        return Collections.singletonList(lambdaTask);
     }
 }

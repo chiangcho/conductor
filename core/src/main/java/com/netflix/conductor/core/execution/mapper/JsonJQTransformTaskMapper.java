@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,6 +68,6 @@ public class JsonJQTransformTaskMapper implements TaskMapper {
         jsonJQTransformTask.setInputData(taskInput);
         jsonJQTransformTask.setStatus(TaskModel.Status.IN_PROGRESS);
 
-        return List.of(jsonJQTransformTask);
+        return Collections.singletonList(jsonJQTransformTask);
     }
 }

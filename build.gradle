@@ -7,6 +7,11 @@ buildscript {
             url "https://plugins.gradle.org/m2/"
         }
     }
+    configurations.classpath {
+        resolutionStrategy {
+            force 'org.ajoberstar.grgit:grgit-core:4.1.1'
+        }
+    }
     dependencies {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:7.0.0'
         classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.7.3'
@@ -52,8 +57,8 @@ allprojects {
     apply plugin: 'java-library'
     apply plugin: 'project-report'
 
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 
     group = 'com.netflix.conductor'
 
@@ -129,6 +134,10 @@ allprojects {
         testImplementation "org.junit.vintage:junit-vintage-engine"
     }
 
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
     // processes additional configuration metadata json file as described here
     // https://docs.spring.io/spring-boot/docs/2.3.1.RELEASE/reference/html/appendix-configuration-metadata.html#configuration-metadata-additional-metadata
     compileJava.inputs.files(processResources)
@@ -144,14 +153,7 @@ allprojects {
     }
 }
 
-// all client and their related modules are published with Java 8 compatibility
-["annotations", "common", "client", "client-spring", "grpc", "grpc-client"].each {
-    project(":conductor-$it") {
-        compileJava {
-            options.release = 8
-        }
-    }
-}
+// all modules are now compiled with Java 8 compatibility
 
 jacocoTestReport {
     reports {

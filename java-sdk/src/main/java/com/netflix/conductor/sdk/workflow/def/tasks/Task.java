@@ -229,10 +229,10 @@ public abstract class Task<T> {
      * @return
      */
     protected List<WorkflowTask> getChildrenTasks() {
-        return List.of();
+        return Collections.emptyList();
     }
 
     protected List<WorkflowTask> getParentTasks() {
-        return List.of();
+        return Collections.emptyList();
     }
 }

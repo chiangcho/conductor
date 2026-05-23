@@ -119,7 +119,7 @@ public class RedisConcurrentExecutionLimitDAO implements ConcurrentExecutionLimi
     @Override
     public boolean exceedsLimit(TaskModel task) {
         Optional<TaskDef> taskDefinition = task.getTaskDefinition();
-        if (taskDefinition.isEmpty()) {
+        if (!taskDefinition.isPresent()) {
             return false;
         }
         int limit = taskDefinition.get().concurrencyLimit();

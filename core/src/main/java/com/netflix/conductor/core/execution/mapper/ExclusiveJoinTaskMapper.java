@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,6 @@ public class ExclusiveJoinTaskMapper implements TaskMapper {
         joinTask.setInputData(joinInput);
         joinTask.setStatus(TaskModel.Status.IN_PROGRESS);
 
-        return List.of(joinTask);
+        return Collections.singletonList(joinTask);
     }
 }

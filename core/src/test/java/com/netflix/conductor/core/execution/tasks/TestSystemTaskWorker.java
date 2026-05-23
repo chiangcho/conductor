@@ -13,6 +13,7 @@
 package com.netflix.conductor.core.execution.tasks;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -117,7 +118,7 @@ public class TestSystemTaskWorker {
 
     @Test
     public void testBatchPollAndExecuteSystemTask() throws Exception {
-        when(queueDAO.pop(anyString(), anyInt(), anyInt())).thenReturn(List.of("t1", "t1"));
+        when(queueDAO.pop(anyString(), anyInt(), anyInt())).thenReturn(Arrays.asList("t1", "t1"));
 
         CountDownLatch latch = new CountDownLatch(2);
         doAnswer(
@@ -137,7 +138,7 @@ public class TestSystemTaskWorker {
 
     @Test
     public void testPollAndExecuteIsolatedSystemTask() throws Exception {
-        when(queueDAO.pop(anyString(), anyInt(), anyInt())).thenReturn(List.of("isolated_taskId"));
+        when(queueDAO.pop(anyString(), anyInt(), anyInt())).thenReturn(Collections.singletonList("isolated_taskId"));
 
         CountDownLatch latch = new CountDownLatch(1);
         doAnswer(

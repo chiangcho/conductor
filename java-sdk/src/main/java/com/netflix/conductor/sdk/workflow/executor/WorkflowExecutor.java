@@ -45,7 +45,7 @@ public class WorkflowExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorkflowExecutor.class);
 
-    private final TypeReference<List<TaskDef>> listOfTaskDefs = new TypeReference<>() {};
+    private final TypeReference<List<TaskDef>> listOfTaskDefs = new TypeReference<List<TaskDef>>() {};
 
     private Map<String, CompletableFuture<Workflow>> runningWorkflowFutures =
             new ConcurrentHashMap<>();

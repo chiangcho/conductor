@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,6 +78,6 @@ public class InlineTaskMapper implements TaskMapper {
         inlineTask.setInputData(taskInput);
         inlineTask.setStatus(TaskModel.Status.IN_PROGRESS);
 
-        return List.of(inlineTask);
+        return Collections.singletonList(inlineTask);
     }
 }

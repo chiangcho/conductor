@@ -13,6 +13,7 @@
 package com.netflix.conductor.sdk.workflow.def.tasks;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.netflix.conductor.common.metadata.tasks.TaskType;
@@ -108,8 +109,8 @@ public class DynamicFork extends Task<DynamicFork> {
     @Override
     protected List<WorkflowTask> getParentTasks() {
         if (forkPrepareTask != null) {
-            return List.of(forkPrepareTask.toWorkflowTask());
+            return Collections.singletonList(forkPrepareTask.toWorkflowTask());
         }
-        return List.of();
+        return Collections.emptyList();
     }
 }

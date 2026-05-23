@@ -13,7 +13,9 @@
 package com.netflix.conductor.core.execution.tasks;
 
 import java.util.Map;
+import java.util.Set;
 
+import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
 import org.apache.commons.lang3.StringUtils;
@@ -108,12 +110,12 @@ public class StartWorkflow extends WorkflowSystemTask {
                                 taskInput.get(START_WORKFLOW_PARAMETER),
                                 StartWorkflowRequest.class);
 
-                var violations = validator.validate(startWorkflowRequest);
+                Set<ConstraintViolation<StartWorkflowRequest>> violations = validator.validate(startWorkflowRequest);
                 if (!violations.isEmpty()) {
                     StringBuilder reasonForIncompletion =
                             new StringBuilder(START_WORKFLOW_PARAMETER)
                                     .append(" validation failed. ");
-                    for (var violation : violations) {
+                    for (ConstraintViolation<StartWorkflowRequest> violation : violations) {
                         reasonForIncompletion
                                 .append("'")
                                 .append(violation.getPropertyPath().toString())

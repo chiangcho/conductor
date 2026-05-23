@@ -146,9 +146,9 @@ public class MockExternalPayloadStorage implements ExternalPayloadStorage {
             subWorkflowTask.setInputParameters(largePayload);
             subWorkflowTask.setSubWorkflowParam(subWorkflowParams);
 
-            dynamicForkLargePayload.put("dynamicTasks", List.of(subWorkflowTask));
+            dynamicForkLargePayload.put("dynamicTasks", Collections.singletonList(subWorkflowTask));
             dynamicForkLargePayload.put(
-                    "dynamicTasksInput", Map.of("large_payload_subworkflow", largePayload));
+                    "dynamicTasksInput", Collections.singletonMap("large_payload_subworkflow", largePayload));
         } catch (IOException e) {
             // just handle this exception here and return empty map so that test will fail in case
             // this exception is thrown

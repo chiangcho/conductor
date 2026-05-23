@@ -275,7 +275,7 @@ public class CassandraMetadataDAO extends CassandraBaseDAO implements MetadataDA
                             row -> {
                                 String defNameVersion =
                                         row.getString(WORKFLOW_DEF_NAME_VERSION_KEY);
-                                var nameVersion = getWorkflowNameAndVersion(defNameVersion);
+                                ImmutablePair<String, Integer> nameVersion = getWorkflowNameAndVersion(defNameVersion);
                                 return getWorkflowDef(nameVersion.getLeft(), nameVersion.getRight())
                                         .orElse(null);
                             })

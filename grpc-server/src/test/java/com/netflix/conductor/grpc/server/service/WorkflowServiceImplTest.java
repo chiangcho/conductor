@@ -81,7 +81,7 @@ public class WorkflowServiceImplTest {
                         .build();
 
         StreamObserver<WorkflowServicePb.WorkflowSummarySearchResult> streamObserver =
-                new StreamObserver<>() {
+                new StreamObserver<WorkflowServicePb.WorkflowSummarySearchResult>() {
                     @Override
                     public void onNext(WorkflowServicePb.WorkflowSummarySearchResult value) {}
 
@@ -121,7 +121,7 @@ public class WorkflowServiceImplTest {
                         .build();
 
         StreamObserver<WorkflowServicePb.WorkflowSearchResult> streamObserver =
-                new StreamObserver<>() {
+                new StreamObserver<WorkflowServicePb.WorkflowSearchResult>() {
                     @Override
                     public void onNext(WorkflowServicePb.WorkflowSearchResult value) {}
 
@@ -163,7 +163,7 @@ public class WorkflowServiceImplTest {
                         .build();
 
         StreamObserver<WorkflowServicePb.WorkflowSummarySearchResult> streamObserver =
-                new StreamObserver<>() {
+                new StreamObserver<WorkflowServicePb.WorkflowSummarySearchResult>() {
                     @Override
                     public void onNext(WorkflowServicePb.WorkflowSummarySearchResult value) {
                         result.set(value);
@@ -218,7 +218,7 @@ public class WorkflowServiceImplTest {
                         .build();
 
         StreamObserver<WorkflowServicePb.WorkflowSummarySearchResult> streamObserver =
-                new StreamObserver<>() {
+                new StreamObserver<WorkflowServicePb.WorkflowSummarySearchResult>() {
                     @Override
                     public void onNext(WorkflowServicePb.WorkflowSummarySearchResult value) {
                         result.set(value);
@@ -272,7 +272,7 @@ public class WorkflowServiceImplTest {
                         .build();
 
         StreamObserver<WorkflowServicePb.WorkflowSearchResult> streamObserver =
-                new StreamObserver<>() {
+                new StreamObserver<WorkflowServicePb.WorkflowSearchResult>() {
                     @Override
                     public void onNext(WorkflowServicePb.WorkflowSearchResult value) {
                         result.set(value);
@@ -325,7 +325,7 @@ public class WorkflowServiceImplTest {
                         .build();
 
         StreamObserver<WorkflowServicePb.WorkflowSearchResult> streamObserver =
-                new StreamObserver<>() {
+                new StreamObserver<WorkflowServicePb.WorkflowSearchResult>() {
                     @Override
                     public void onNext(WorkflowServicePb.WorkflowSearchResult value) {
                         result.set(value);

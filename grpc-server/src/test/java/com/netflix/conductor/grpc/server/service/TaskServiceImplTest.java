@@ -66,7 +66,7 @@ public class TaskServiceImplTest {
                         .build();
 
         StreamObserver<TaskServicePb.TaskSummarySearchResult> streamObserver =
-                new StreamObserver<>() {
+                new StreamObserver<TaskServicePb.TaskSummarySearchResult>() {
                     @Override
                     public void onNext(TaskServicePb.TaskSummarySearchResult value) {}
 
@@ -106,7 +106,7 @@ public class TaskServiceImplTest {
                         .build();
 
         StreamObserver<TaskServicePb.TaskSearchResult> streamObserver =
-                new StreamObserver<>() {
+                new StreamObserver<TaskServicePb.TaskSearchResult>() {
                     @Override
                     public void onNext(TaskServicePb.TaskSearchResult value) {}
 
@@ -147,7 +147,7 @@ public class TaskServiceImplTest {
                         .build();
 
         StreamObserver<TaskServicePb.TaskSummarySearchResult> streamObserver =
-                new StreamObserver<>() {
+                new StreamObserver<TaskServicePb.TaskSummarySearchResult>() {
                     @Override
                     public void onNext(TaskServicePb.TaskSummarySearchResult value) {
                         result.set(value);
@@ -199,7 +199,7 @@ public class TaskServiceImplTest {
                         .build();
 
         StreamObserver<TaskServicePb.TaskSearchResult> streamObserver =
-                new StreamObserver<>() {
+                new StreamObserver<TaskServicePb.TaskSearchResult>() {
                     @Override
                     public void onNext(TaskServicePb.TaskSearchResult value) {
                         result.set(value);

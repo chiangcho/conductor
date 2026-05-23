@@ -59,7 +59,7 @@ public class ForkJoinDynamicTaskMapper implements TaskMapper {
     private final ObjectMapper objectMapper;
     private final MetadataDAO metadataDAO;
     private static final TypeReference<List<WorkflowTask>> ListOfWorkflowTasks =
-            new TypeReference<>() {};
+            new TypeReference<List<WorkflowTask>>() {};
 
     @Autowired
     public ForkJoinDynamicTaskMapper(

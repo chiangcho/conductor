@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -46,6 +47,6 @@ public class StartWorkflowTaskMapper implements TaskMapper {
         startWorkflowTask.setStatus(TaskModel.Status.SCHEDULED);
         startWorkflowTask.setCallbackAfterSeconds(workflowTask.getStartDelay());
         LOGGER.debug("{} created", startWorkflowTask);
-        return List.of(startWorkflowTask);
+        return Collections.singletonList(startWorkflowTask);
     }
 }

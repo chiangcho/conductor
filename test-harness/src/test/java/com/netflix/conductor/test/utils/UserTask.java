@@ -42,7 +42,7 @@ public class UserTask extends WorkflowSystemTask {
     private final ObjectMapper objectMapper;
 
     private static final TypeReference<Map<String, Map<String, List<Object>>>>
-            mapStringListObjects = new TypeReference<>() {};
+            mapStringListObjects = new TypeReference<Map<String, Map<String, List<Object>>>>() {};
 
     @Autowired
     public UserTask(ObjectMapper objectMapper) {

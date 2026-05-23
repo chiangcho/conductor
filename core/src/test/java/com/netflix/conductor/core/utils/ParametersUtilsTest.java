@@ -13,6 +13,7 @@
 package com.netflix.conductor.core.utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -300,7 +301,7 @@ public class ParametersUtilsTest {
     @Test
     public void getWorkflowInputHandlesNullInputTemplate() {
         WorkflowDef workflowDef = new WorkflowDef();
-        Map<String, Object> inputParams = Map.of("key", "value");
+        Map<String, Object> inputParams = Collections.singletonMap("key", "value");
         Map<String, Object> workflowInput =
                 parametersUtils.getWorkflowInput(workflowDef, inputParams);
         assertEquals("value", workflowInput.get("key"));
@@ -309,8 +310,8 @@ public class ParametersUtilsTest {
     @Test
     public void getWorkflowInputFillsInTemplatedFields() {
         WorkflowDef workflowDef = new WorkflowDef();
-        workflowDef.setInputTemplate(Map.of("other_key", "other_value"));
-        Map<String, Object> inputParams = new HashMap<>(Map.of("key", "value"));
+        workflowDef.setInputTemplate(Collections.singletonMap("other_key", "other_value"));
+        Map<String, Object> inputParams = new HashMap<>(Collections.singletonMap("key", "value"));
         Map<String, Object> workflowInput =
                 parametersUtils.getWorkflowInput(workflowDef, inputParams);
         assertEquals("value", workflowInput.get("key"));
@@ -321,8 +322,8 @@ public class ParametersUtilsTest {
     public void getWorkflowInputPreservesExistingFieldsIfPopulated() {
         WorkflowDef workflowDef = new WorkflowDef();
         String keyName = "key";
-        workflowDef.setInputTemplate(Map.of(keyName, "templated_value"));
-        Map<String, Object> inputParams = new HashMap<>(Map.of(keyName, "supplied_value"));
+        workflowDef.setInputTemplate(Collections.singletonMap(keyName, "templated_value"));
+        Map<String, Object> inputParams = new HashMap<>(Collections.singletonMap(keyName, "supplied_value"));
         Map<String, Object> workflowInput =
                 parametersUtils.getWorkflowInput(workflowDef, inputParams);
         assertEquals("supplied_value", workflowInput.get(keyName));

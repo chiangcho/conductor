@@ -51,7 +51,7 @@ public class DefaultEventQueueProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultEventQueueProcessor.class);
     private final Map<Status, ObservableQueue> queues;
     private final WorkflowExecutor workflowExecutor;
-    private static final TypeReference<Map<String, Object>> _mapType = new TypeReference<>() {};
+    private static final TypeReference<Map<String, Object>> _mapType = new TypeReference<Map<String, Object>>() {};
     private final ObjectMapper objectMapper;
 
     public DefaultEventQueueProcessor(
@@ -130,7 +130,7 @@ public class DefaultEventQueueProcessor {
                                                     .findFirst();
                                 }
 
-                                if (optionalTaskModel.isEmpty()) {
+                                if (!optionalTaskModel.isPresent()) {
                                     LOGGER.error(
                                             "No matching tasks found to be marked as completed for workflow {}, taskRefName {}, taskId {}",
                                             workflowId,

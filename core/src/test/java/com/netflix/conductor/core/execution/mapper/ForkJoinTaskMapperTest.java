@@ -48,7 +48,7 @@ public class ForkJoinTaskMapperTest {
     @Before
     public void setUp() {
         deciderService = Mockito.mock(DeciderService.class);
-        forkJoinTaskMapper = new ForkJoinTaskMapper();
+        forkJoinTaskMapper = new ForkJoinTaskMapper(new com.netflix.conductor.core.config.ConductorProperties());
         idGenerator = new IDGenerator();
     }
 

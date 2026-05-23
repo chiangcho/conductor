@@ -28,7 +28,7 @@ public class ShipmentWorkflow {
 
     public ShipmentWorkflow(WorkflowExecutor executor) {
         this.executor = executor;
-        this.executor.initWorkers(ShipmentWorkflow.class.getPackageName());
+        this.executor.initWorkers(ShipmentWorkflow.class.getPackage().getName());
     }
 
     public ConductorWorkflow<Order> createOrderFlow() {

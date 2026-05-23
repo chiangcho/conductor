@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -70,6 +71,6 @@ public class EventTaskMapper implements TaskMapper {
         eventTask.getInputData().put("sink", sink);
         eventTask.getInputData().put("asyncComplete", asynComplete);
 
-        return List.of(eventTask);
+        return Collections.singletonList(eventTask);
     }
 }

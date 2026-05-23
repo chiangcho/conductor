@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.sdk.workflow.def.tasks;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -79,7 +80,13 @@ public class Javascript extends Task<Javascript> {
         }
         super.input(EVALUATOR_TYPE_PARAMETER, "javascript");
         try {
-            String script = new String(stream.readAllBytes());
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = stream.read(buffer)) != -1) {
+                result.write(buffer, 0, length);
+            }
+            String script = result.toString("UTF-8");
             super.input(EXPRESSION_PARAMETER, script);
         } catch (IOException e) {
             throw new RuntimeException(e);

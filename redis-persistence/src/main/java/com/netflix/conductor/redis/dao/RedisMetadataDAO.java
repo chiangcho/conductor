@@ -264,7 +264,7 @@ public class RedisMetadataDAO extends BaseDynoDAO implements MetadataDAO {
         Optional<Integer> optionMaxVersion = getWorkflowMaxVersion(name);
 
         // delete workflow name
-        if (optionMaxVersion.isEmpty()) {
+        if (!optionMaxVersion.isPresent()) {
             jedisProxy.srem(nsKey(WORKFLOW_DEF_NAMES), name);
         }
 

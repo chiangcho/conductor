@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -103,6 +104,6 @@ public class UserDefinedTaskMapper implements TaskMapper {
         userDefinedTask.setRateLimitFrequencyInSeconds(
                 taskDefinition.getRateLimitFrequencyInSeconds());
 
-        return List.of(userDefinedTask);
+        return Collections.singletonList(userDefinedTask);
     }
 }

@@ -82,7 +82,7 @@ public class TestTerminate {
         workflow.setOutput(Collections.singletonMap("output", "${task1.output.value}"));
 
         HashMap<String, Object> expectedOutput =
-                new HashMap<>() {
+                new HashMap<String, Object>() {
                     {
                         put("output", "${task0.output.value}");
                     }
@@ -106,7 +106,7 @@ public class TestTerminate {
         workflow.setOutput(Collections.singletonMap("output", "${task1.output.value}"));
 
         HashMap<String, Object> expectedOutput =
-                new HashMap<>() {
+                new HashMap<String, Object>() {
                     {
                         put("output", "${task0.output.value}");
                     }
@@ -144,7 +144,7 @@ public class TestTerminate {
         Terminate terminateTask = new Terminate();
 
         HashMap<String, Object> expectedOutput =
-                new HashMap<>() {
+                new HashMap<String, Object>() {
                     {
                         put("result", 1);
                     }

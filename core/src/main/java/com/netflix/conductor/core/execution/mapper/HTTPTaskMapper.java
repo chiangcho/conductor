@@ -96,6 +96,6 @@ public class HTTPTaskMapper implements TaskMapper {
             httpTask.setIsolationGroupId(taskDefinition.getIsolationGroupId());
             httpTask.setExecutionNameSpace(taskDefinition.getExecutionNameSpace());
         }
-        return List.of(httpTask);
+        return Collections.singletonList(httpTask);
     }
 }

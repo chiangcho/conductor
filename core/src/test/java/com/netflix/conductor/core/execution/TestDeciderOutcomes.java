@@ -157,7 +157,7 @@ public class TestDeciderOutcomes {
         taskMappers.put(DECISION.name(), new DecisionTaskMapper());
         taskMappers.put(SWITCH.name(), new SwitchTaskMapper(evaluators));
         taskMappers.put(DYNAMIC.name(), new DynamicTaskMapper(parametersUtils, metadataDAO));
-        taskMappers.put(FORK_JOIN.name(), new ForkJoinTaskMapper());
+        taskMappers.put(FORK_JOIN.name(), new ForkJoinTaskMapper(new com.netflix.conductor.core.config.ConductorProperties()));
         taskMappers.put(JOIN.name(), new JoinTaskMapper());
         taskMappers.put(
                 FORK_JOIN_DYNAMIC.name(),

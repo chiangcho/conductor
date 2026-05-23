@@ -14,6 +14,7 @@ package com.netflix.conductor.sdk.workflow.def.tasks;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.netflix.conductor.common.metadata.tasks.TaskType;
@@ -116,7 +117,7 @@ public class ForkJoin extends Task<ForkJoin> {
                     forkedWorkflowTasks.get(forkedWorkflowTasks.size() - 1).getTaskReferenceName());
         }
         if (this.join != null) {
-            fork.setJoinOn(List.of(this.join.getJoinOn()));
+            fork.setJoinOn(Arrays.asList(this.join.getJoinOn()));
         } else {
             fork.setJoinOn(joinOnTaskRefNames);
         }

@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -61,6 +62,6 @@ public class TerminateTaskMapper implements TaskMapper {
         task.setStartTime(System.currentTimeMillis());
         task.setInputData(taskInput);
         task.setStatus(TaskModel.Status.IN_PROGRESS);
-        return List.of(task);
+        return Collections.singletonList(task);
     }
 }

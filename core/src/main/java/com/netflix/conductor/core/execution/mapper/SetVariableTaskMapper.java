@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.core.execution.mapper;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -42,6 +43,6 @@ public class SetVariableTaskMapper implements TaskMapper {
         varTask.setInputData(taskMapperContext.getTaskInput());
         varTask.setStatus(TaskModel.Status.IN_PROGRESS);
 
-        return List.of(varTask);
+        return Collections.singletonList(varTask);
     }
 }

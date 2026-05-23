@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.redis.limit.config;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
@@ -51,7 +52,7 @@ public class RedisConcurrentExecutionLimitConfiguration {
 
         RedisClusterConfiguration redisClusterConfiguration =
                 new RedisClusterConfiguration(
-                        List.of(properties.getHost() + ":" + properties.getPort()));
+                        Collections.singletonList(properties.getHost() + ":" + properties.getPort()));
 
         return new JedisConnectionFactory(redisClusterConfiguration, clientConfig);
     }

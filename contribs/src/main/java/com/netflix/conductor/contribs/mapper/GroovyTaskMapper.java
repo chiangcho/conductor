@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.contribs.mapper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,6 +70,6 @@ public class GroovyTaskMapper implements TaskMapper {
         groovyTask.setInputData(taskInput);
         groovyTask.setStatus(TaskModel.Status.IN_PROGRESS);
 
-        return List.of(groovyTask);
+        return Collections.singletonList(groovyTask);
     }
 }
