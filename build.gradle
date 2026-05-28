@@ -98,6 +98,9 @@ allprojects {
             // dependency versions for the BOM can be found at https://docs.spring.io/spring-boot/docs/2.7.3/reference/htmlsingle/#appendix.dependency-versions
             mavenBom(SpringBootPlugin.BOM_COORDINATES)
         }
+        dependencies {
+            dependency 'org.flywaydb:flyway-core:7.15.0'
+        }
     }
 
     dependencies {
@@ -188,7 +191,7 @@ configure(allprojects - project(':conductor-grpc')) {
     }
 }
 
-['cassandra-persistence', 'core', 'redis-concurrency-limit', 'test-harness', 'client'].each {
+['cassandra-persistence', 'core', 'test-harness', 'client'].each {
     configure(project(":conductor-$it")) {
         spotless {
             groovy {

@@ -39,16 +39,12 @@ include 'client'
 include 'client-spring'
 
 include 'cassandra-persistence'
-include 'redis-persistence'
+include 'mysql-persistence'
 
 include 'es6-persistence'
 
-include 'redis-lock'
-
 include 'awss3-storage'
 include 'awssqs-event-queue'
-
-include 'redis-concurrency-limit'
 
 include 'json-jq-task'
 include 'http-task'
