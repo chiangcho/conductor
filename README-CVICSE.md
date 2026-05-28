@@ -5,7 +5,7 @@
 仓库地址：
 https://github.com/chiangcho/conductor
 
-
+当前分支feature/main-async-perf-merge，是广农出现性能问题后，基于jdk1.8分支将性能优化的内容合并到了该分支，并修改了一些问题，例如flyway版本，并适配到了广农使用的nacos 1.4.4版本。广农的同步是自己写的循环。
 
 
 ## 打包与运行

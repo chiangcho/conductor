@@ -31,6 +31,7 @@ import javax.annotation.PreDestroy;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -57,6 +58,7 @@ import com.google.common.base.CaseFormat;
         name = "conductor.indexing.enabled",
         havingValue = "true",
         matchIfMissing = true)
+@ConditionalOnMissingBean(IndexDAO.class)
 @Component
 public class DBIndexDAO implements IndexDAO {
     private static final String ARCHIVED_FIELD = "archived";
