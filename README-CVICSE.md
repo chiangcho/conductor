@@ -5,6 +5,81 @@
 仓库地址：
 https://github.com/chiangcho/conductor
 
+
+
+
+## 打包与运行
+
+### 打包命令
+
+在项目根目录执行（跳过测试）：
+
+```bash
+./gradlew :conductor-server:bootJar -x test
+```
+
+打包产物路径：
+```
+server/build/libs/conductor-server-*-boot.jar
+```
+
+### 运行命令
+
+```bash
+java -jar server/build/libs/conductor-server-*-boot.jar
+```
+
+指定外部配置文件：
+
+```bash
+java -jar server/build/libs/conductor-server-3.14.0-SNAPSHOT-boot.jar --spring.config.location=server/src/main/resources/application.properties
+```
+
+---
+
+### 验证
+
+在powershell中执行
+
+查看定义情况
+```bash
+Invoke-RestMethod http://localhost:8080/api/metadata/workflow
+```
+
+发起流程
+```bash
+Invoke-RestMethod -Method POST http://localhost:8080/api/workflow -ContentType "application/json" -Body '{"name":"kitchensink","version":1,"input":{}}'
+```
+
+使用返回的ID，查询执行情况
+```bash
+Invoke-RestMethod http://localhost:8080/api/workflow/223508e8-afba-4650-bd37-6fe9f7c7f6c1
+```
+
+## 运行依赖
+
+### Nacos
+
+- 版本：`1.4.4`（nacos-client），兼容 Nacos Server 1.x
+- 用途：服务注册与发现
+- 默认地址：`127.0.0.1:8848`
+- 服务端，下载地址https://github.com/alibaba/nacos/releases，下载1.4.4，解压后，执行./bin目录在，执行startup.cmd -m 
+
+### MySQL
+
+- 版本：**5.7+**（5.2 以上均可，推荐 5.7；flyway-core 固定 7.15.0 以兼容 MySQL 5.7）
+- 数据库名：`conductor`
+- 默认连接：`jdbc:mysql://127.0.0.1:3307/conductor?characterEncoding=utf-8&serverTimezone=UTC`
+- 默认账号：`root` / `123456`
+- 表结构由 Flyway 自动初始化，首次启动会自动建表，无需手动执行 SQL
+
+## 一些说明
+
+mysql需要5.2版本以上
+
+
+
+
 ### 最新修改内容
 * log4j的配置文件
 * application.properties常用配置
@@ -38,10 +113,6 @@ https://github.com/chiangcho/conductor
 * jdk 版本恢复回官方的11
 * 
 
-
-## 一些说明
-
-mysql需要5.2版本以上
 
 
 ## 版本记录
@@ -82,6 +153,38 @@ mysql需要5.2版本以上
 
 
 ---
+
+## 2026-05 后续提交（MySQL + JDK8 迁移）
+
+### 降级 JDK 11 → JDK 8
+
+运行环境只需 JDK 8，源码和构建均已调整为 `sourceCompatibility = 1.8`。
+
+### 新增 mysql-persistence 模块
+
+从 jdk1.8 分支合入完整的 MySQL 持久化实现（DAO / Config / Flyway 迁移 SQL）。Flyway 版本固定为 7.15.0（避免与 MySQL 5.7 不兼容）。
+
+### 构建配置切换：移除 Redis，接入 MySQL
+
+- `settings.gradle`：移除 `redis-persistence` / `redis-lock` / `redis-concurrency-limit`，新增 `mysql-persistence`
+- `server/build.gradle`：依赖同步，显式声明 `nacos-client:1.4.4`
+- 删除过期的 `server/dependencies.lock`
+
+### server 默认配置
+
+`application.properties` 切换为 MySQL + Nacos，并默认开启性能优化选项：
+
+```properties
+conductor.db.type=mysql
+spring.datasource.url=jdbc:mysql://127.0.0.1:3307/conductor?characterEncoding=utf-8&serverTimezone=UTC
+spring.cloud.nacos.discovery.enabled=true
+spring.cloud.nacos.discovery.server-addr=127.0.0.1:8848
+conductor.app.fork-parallel-enabled=true
+conductor.app.force-sync-system-task-enabled=true
+```
+
+---
+
 
 ## 2026-05 升级：异步性能优化合并（feature/main-async-perf-merge）
 
